@@ -23,4 +23,4 @@ def test_other_site():
     assert response.text == 'Resource not found'
 
 if __name__ == '__main__':
-    pytest.main(["-v", __file__])
+    pytest.main()
