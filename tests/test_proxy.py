@@ -13,14 +13,18 @@ def start_proxy_server():
 def test_google_com():
     response = requests.get(PROXY_URL + '/google.com')
     assert response.status_code == 200
-    print(response.text)
     assert response.text == 'This is a static response for google.com'
 
-def test_other_site():
-    response = requests.get(PROXY_URL + '/example.com')
-    assert response.status_code == 404
-    print(response.text)
-    assert response.text == 'Resource not found'
+def test_linked_web_apis():
+    response = requests.get(PROXY_URL + '/http://linked-web-apis.fit.cvut.cz/ns/core')
+    assert response.status_code == 200
+    assert response.headers['Content-Type'] == 'text/turtle'
+
+def test_ontologi_es():
+    response = requests.get(PROXY_URL + '/http%3A//ontologi.es/days%23')
+    assert response.status_code == 200
+    assert response.headers['Content-Type'] == 'text/turtle'
+
 
 if __name__ == '__main__':
     pytest.main()
