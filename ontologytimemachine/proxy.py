@@ -13,23 +13,29 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'This is a static response for google.com')
         else:
-            print(self.path)
-            ontology = self.path[1:]
-            print(ontology)
-            try:
-                response = requests.get(ontology)
-                content_type = response.headers.get('Content-Type', '')
+            self.proxy_logic()
 
-                if response.status_code == 200 and content_type in ['text/turtle']:
-                    self.send_response(200)
-                    self.send_header('Content-type', content_type)
-                    self.end_headers()
-                    self.wfile.write(response.content)
-                else:
-                    self.fetch_from_dbpedia_archivo_api(ontology)
+    def proxy_logic(self):
+        self.failover_mode()
+        self.time_based_mode()
+        self.dependency_based_mode()
 
-            except requests.exceptions.RequestException:
+    def failover_mode(self):
+        ontology = self.path[1:]
+        try:
+            response = requests.get(ontology)
+            content_type = response.headers.get('Content-Type', '')
+
+            if response.status_code == 200 and content_type in ['text/turtle']:
+                self.send_response(200)
+                self.send_header('Content-type', content_type)
+                self.end_headers()
+                self.wfile.write(response.content)
+            else:
                 self.fetch_from_dbpedia_archivo_api(ontology)
+
+        except requests.exceptions.RequestException:
+            self.fetch_from_dbpedia_archivo_api(ontology)
 
     def fetch_from_dbpedia_archivo_api(self, ontology):
         dbpedia_url = f'https://archivo.dbpedia.org/download?o={ontology}&f=ttl'
@@ -45,6 +51,12 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 self.send_error(404, 'Resource not found')
         except requests.exceptions.RequestException:
             self.send_error(404, 'Resource not found')
+    
+    def time_based_mode(self):
+        pass
+
+    def dependency_based_mode(self):
+        pass
 
 def run_proxy(server_class=HTTPServer, handler_class=ProxyHandler, port=PORT):
     server_address = ('', port)
