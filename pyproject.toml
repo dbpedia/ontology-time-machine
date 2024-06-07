@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "ontologytimemachine"
+version = "0.1.0"
+description = ""
+authors = ["Jenifer Tabita Ciuciu-Kiss <jenifer.tabita.ciuciu.kiss@gmail.com>"]
+readme = "README.md"
+packages = [{include = "ontologytimemachine"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pytest = "^8.2.1"
+requests = "^2.32.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
