@@ -5,11 +5,18 @@ import requests
 import sys
 import proxy
 
+
+IP = '0.0.0.0'
+PORT = '8899'
+
+
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     dbpedia_api = 'https://archivo.dbpedia.org/download'
 
+
     def before_upstream_connection(self, request: HttpParser):
         return None
+
 
     def handle_client_request(self, request: HttpParser):
         # Check if the request is for google.com and provide a static response
@@ -27,10 +34,12 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         self.proxy_logic(request)
         return None
 
+
     def proxy_logic(self, request: HttpParser):
         self.failover_mode(request)
         self.time_based_mode(request)
         self.dependency_based_mode(request)
+
 
     def failover_mode(self, request):
         print('Failover mode')
@@ -60,11 +69,14 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             print(f'Exception occurred: {e}')
             self.fetch_from_dbpedia_archivo_api(ontology)
 
+
     def time_based_mode(self, request):
         pass
 
+
     def dependency_based_mode(self, request):
         pass
+
 
     def fetch_from_dbpedia_archivo_api(self, ontology: str, format: str = 'ttl'):
         dbpedia_url = f'{self.dbpedia_api}?o={ontology}&f={format}'
@@ -95,19 +107,23 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 )
             )
 
+
     def handle_upstream_chunk(self, chunk: memoryview):
         return chunk
+
 
     def on_upstream_connection_close(self):
         pass
 
+
     def on_client_connection_close(self):
         pass
 
+
 if __name__ == '__main__':
     sys.argv += [
-        '--hostname', '0.0.0.0',
-        '--port', '8899',
-        '--plugins', __name__ + '.CustomMitmPlugin',
+        '--hostname', IP,
+        '--port', PORT,
+        '--plugins', __name__ + '.OntologyTimeMachinePlugin',
     ]
     proxy.main()
