@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY pyproject.toml .
 COPY ontologytimemachine /ontologytimemachine
+COPY README.md /README.md
 
 RUN python3 -m pip install --upgrade pip
 
