@@ -17,7 +17,7 @@ def start_proxy_server():
         [
             'python3', '-m', 'proxy', 
             '--hostname', IP, 
-            '--port', str(PORT), 
+            '--port', PORT, 
             '--plugins', 'ontologytimemachine.custom_proxy.OntologyTimeMachinePlugin'
         ],
         stdout=subprocess.PIPE,
