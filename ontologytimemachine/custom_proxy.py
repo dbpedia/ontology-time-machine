@@ -4,15 +4,24 @@ from proxy.common.utils import build_http_response
 import requests
 import sys
 import proxy
+import logging
+from typing import Any, Optional
 
 
 IP = '0.0.0.0'
 PORT = '8899'
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     dbpedia_api = 'https://archivo.dbpedia.org/download'
 
+    def __init__(
+            self,
+            *args: Any,
+            **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
 
     def before_upstream_connection(self, request: HttpParser):
         return None
@@ -42,16 +51,16 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
 
     def failover_mode(self, request):
-        print('Failover mode')
+        logging.info('Failover mode')
         ontology = str(request._url)
-        print(f'Ontology: {ontology}')
+        logging.info(f'Ontology: {ontology}')
         
         try:
             response = requests.get(ontology)
-            print('Response received')
-            print(f'Response status code: {response.status_code}')
+            logging.info('Response received')
+            logging.info(f'Response status code: {response.status_code}')
             content_type = response.headers.get('Content-Type', '')
-            print(f'Content type: {content_type}')
+            logging.info(f'Content type: {content_type}')
 
             if response.status_code == 200 and content_type in ['text/turtle']:
                 self.client.queue(
@@ -62,11 +71,11 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                     )
                 )
             else:
-                print('Content type is not text/turtle or status code is not 200, fetching from DBpedia Archivo API')
+                logging.info('Content type is not text/turtle or status code is not 200, fetching from DBpedia Archivo API')
                 self.fetch_from_dbpedia_archivo_api(ontology)
 
         except requests.exceptions.RequestException as e:
-            print(f'Exception occurred: {e}')
+            logging.info(f'Exception occurred: {e}')
             self.fetch_from_dbpedia_archivo_api(ontology)
 
 
@@ -81,10 +90,10 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     def fetch_from_dbpedia_archivo_api(self, ontology: str, format: str = 'ttl'):
         dbpedia_url = f'{self.dbpedia_api}?o={ontology}&f={format}'
         try:
-            print(f'Fetching from DBpedia Archivo API: {dbpedia_url}')
+            logging.info(f'Fetching from DBpedia Archivo API: {dbpedia_url}')
             response = requests.get(dbpedia_url)
-            print('Response received')
-            print(f'Response status code: {response.status_code}')
+            logging.info('Response received')
+            logging.info(f'Response status code: {response.status_code}')
             if response.status_code == 200:
                 self.client.queue(
                     build_http_response(
@@ -100,7 +109,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                     )
                 )
         except requests.exceptions.RequestException as e:
-            print(f'Exception occurred while fetching from DBpedia Archivo API: {e}')
+            logging.info(f'Exception occurred while fetching from DBpedia Archivo API: {e}')
             self.client.queue(
                 build_http_response(
                     404, reason=b'Not Found', body=b'Failed to fetch from DBpedia Archivo API'
