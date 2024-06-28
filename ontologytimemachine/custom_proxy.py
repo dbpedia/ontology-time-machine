@@ -86,36 +86,8 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     def handle_upstream_chunk(self, chunk: memoryview):
         logger.info('HTTPS call')
 
-        try:
-            # Parse the HTTP response to handle different cases
-            parser = HttpParser(httpParserTypes.RESPONSE_PARSER)
-            parser.parse(memoryview(chunk))
-            
-            #chunk_bytes = chunk.tobytes()
-            #chunk_str = chunk_bytes.decode('utf-8')
-            #logger.debug(f'Decoded chunk: {chunk_str}')
-
-            code = int(parser.code.decode('utf-8'))
-            if code >= 100 and code < 200:
-                return chunk
-            elif code >= 201 and code <= 204:
-                return chunk
-            elif code == 451:
-                return chunk
-            else:
-                response = proxy_logic_https(parser)
-                logger.debug('Queue response')
-                self.queue_response(response)
-                return None
-        except UnicodeDecodeError:
-            logger.warning('Received non-text chunk, cannot decode')
-        except Exception as e:
-            logger.error(f'Exception occurred while handling upstream chunk: {e}')
-        
         return chunk
 
-
-        return chunk
 
     def queue_response(self, response):
         self.client.queue(
