@@ -50,8 +50,8 @@ def check_if_archivo_ontology_requested(request):
     with open('ontologytimemachine/utils/archivo_ontologies.txt', 'r') as file:
         urls = [line.strip() for line in file]
     parsed_urls = [urlparse(url).netloc for url in urls]
-    host_to_check = request.host.decode('utf-8')
-    return host_to_check in parsed_urls
+    _, host = get_ontology_from_request(request)
+    return host in parsed_urls
 
 
 def mock_response_404():
@@ -73,6 +73,20 @@ def get_headers_and_expected_type(request):
     return headers, expected_type
 
 
+def get_ontology_from_request(request):
+    logger.debug('Get ontology from request')
+    if (request.method == b'GET' or request.method == b'HEAD') and not request.host:
+        for k, v in request.headers.items():
+            if v[0].decode('utf-8') == 'Host':
+                print('host found')
+                host = v[1].decode('utf-8')
+        ontology = 'https://' + host + request.path.decode('utf-8')
+    else:
+        host = request.host.decode('utf-8')
+        ontology = str(request._url)
+    logger.debug(f'Ontology: {ontology}')
+    return ontology, host
+
 def proxy_logic_http(request: HttpParser):
     logger.info('Start proxy logic in case of HTTP')
     response = failover_mode_http(request)
@@ -80,9 +94,11 @@ def proxy_logic_http(request: HttpParser):
 
 
 def failover_mode_http(request):
-    headers, expected_type = get_headers_and_expected_type(request)
+    headers, _ = get_headers_and_expected_type(request)
     logger.debug(headers)
-    ontology = str(request._url)
+    logger.debug('Failover mode')
+
+    ontology, _ = get_ontology_from_request(request)
     try:
         response = requests.get(url=ontology, headers=headers, timeout=5)
         logger.info(f' Status code: {response.status_code}')

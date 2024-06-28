@@ -5,6 +5,7 @@ from proxy.http.methods import HttpMethods
 from ontologytimemachine.utils.utils import proxy_logic_http, proxy_logic_https
 from ontologytimemachine.utils.utils import check_if_archivo_ontology_requested
 from ontologytimemachine.utils.utils import get_headers_and_expected_type
+from ontologytimemachine.utils.utils import get_ontology_from_request
 from requests.exceptions import SSLError, Timeout, ConnectionError, RequestException
 from http.client import responses
 import proxy
@@ -28,9 +29,12 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
     def before_upstream_connection(self, request: HttpParser):
         logger.debug('Before upstream')
+        logger.debug(request.method)
         scheme = 'https' if request.method == b'CONNECT' else 'http'
         if scheme == 'https':
             logger.debug('The request is HTTPS, forward as it is')
+            logger.debug(f'Request host: {request.host}')
+            logger.debug(f'Request path: {request.path}')
             return request
 
         ontology_request = check_if_archivo_ontology_requested(request)
@@ -61,19 +65,18 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     def handle_client_request(self, request: HttpParser):
         logger.debug('HTTP call')
 
-
-        scheme = 'https' if (request.path == None or request.host == None) else 'http'
+        logger.debug(request.method)
+        scheme = 'https' if request.method == b'CONNECT' else 'http'
         if scheme == 'https':
             logger.debug('The request is HTTPS, forward as it is')
             return request
-        
-        logger.debug(request._url)
 
         ontology_request = check_if_archivo_ontology_requested(request)
         if not ontology_request:
             logger.info('No ontology is asked, forward original request')
-            return request    
-        
+            return request   
+
+        logger.debug('Call proxy logic')
         response = proxy_logic_http(request)
         self.queue_response(response)
 
@@ -87,6 +90,11 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             # Parse the HTTP response to handle different cases
             parser = HttpParser(httpParserTypes.RESPONSE_PARSER)
             parser.parse(memoryview(chunk))
+            
+            #chunk_bytes = chunk.tobytes()
+            #chunk_str = chunk_bytes.decode('utf-8')
+            #logger.debug(f'Decoded chunk: {chunk_str}')
+
             code = int(parser.code.decode('utf-8'))
             if code >= 100 and code < 200:
                 return chunk
