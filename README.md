@@ -17,6 +17,9 @@ cp ca-signing-key.pem ~/ontology-time-machine/ca-signing-key.pem
 - docker build -t ontology_time_machine:0.1 .
 - docker run -d -e PORT=8899 -p 8182:8899 ontology_time_machine:0.1
 
+### Deployed at:
+95.217.207.179:8182
+
 ### Curl tests:
 - curl -x http://0.0.0.0:8899 --cacert ca-cert.pem http://www.google.com
 - curl -x http://0.0.0.0:8899 -H "Accept: text/turtle" --cacert ca-cert.pem http://ontologi.es/days#
