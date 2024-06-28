@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
 COPY pyproject.toml .
 COPY ontologytimemachine /ontologytimemachine
 COPY README.md /README.md
+COPY ca-cert.pem /ca-cert.pem
+COPY ca-key.pem /ca-key.pem
+COPY ca-signing-key.pem /ca-signing-key.pem
 
 RUN python3 -m pip install --upgrade pip
 

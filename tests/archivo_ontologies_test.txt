@@ -1,0 +1,13 @@
+http://babelnet.org/rdf/
+http://bag.basisregistraties.overheid.nl/def/bag
+http://bblfish.net/work/atom-owl/2006-06-06/
+http://brk.basisregistraties.overheid.nl/def/brk
+http://brt.basisregistraties.overheid.nl/def/top10nl
+http://brt.basisregistraties.overheid.nl/id/begrippenkader/top10nl
+http://buzzword.org.uk/rdf/personal-link-types#
+http://catalogus-professorum.org/cpm/2/
+http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf
+http://data.bigdatagrapes.eu/resource/ontology/
+http://data.europa.eu/esco/flow
+http://data.globalchange.gov/gcis.owl
+http://data.ontotext.com/resource/leak/
