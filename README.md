@@ -1,11 +1,23 @@
 # ontology-time-machine
 
 
+### Before building the docker file:
+
+```
+git clone https://github.com/abhinavsingh/proxy.py.git
+cd proxy.py
+make ca-certificates
+cp ca-cert.pem ~/ontology-time-machine/ca-cert.pem
+cp ca-key.pem ~/ontology-time-machine/ca-key.pem
+cp ca-signing-key.pem ~/ontology-time-machine/ca-signing-key.pem
+```
+
+
 ### Docker command:
 - docker build -t ontology_time_machine:0.1 .
 - docker run -d -e PORT=8899 -p 8182:8899 ontology_time_machine:0.1
 
-###Curl tests:
+### Curl tests:
 - curl -x http://0.0.0.0:8899 --cacert ca-cert.pem http://www.google.com
 - curl -x http://0.0.0.0:8899 -H "Accept: text/turtle" --cacert ca-cert.pem http://ontologi.es/days#
 - curl -x http://0.0.0.0:8899 -H "Accept: text/turtle" --cacert ca-cert.pem http://linked-web-apis.fit.cvut.cz/ns/core
