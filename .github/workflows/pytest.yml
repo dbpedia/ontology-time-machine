@@ -32,8 +32,3 @@ jobs:
     - name: Test with pytest
       run: |
         poetry run pytest
-    - name: Remove keys
-      run:
-        rm ca-cert.pem
-        rm ca-key.pem
-        rm ca-signing-key.pem
