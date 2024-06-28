@@ -26,9 +26,9 @@ jobs:
         CA_KEY: ${{ secrets.CA_KEY }}
         CA_SIGNING_KEY: ${{ secrets.CA_SIGNING_KEY }}
       run: |
-        echo "$CA_CERT" | base64 --decode > ca-cert.pem
-        echo "$CA_KEY" | base64 --decode > ca-key.pem
-        echo "$CA_SIGNING_KEY" | base64 --decode > ca-signing-key.pem
+        echo "$CA_CERT" > ca-cert.pem
+        echo "$CA_KEY" > ca-key.pem
+        echo "$CA_SIGNING_KEY" > ca-signing-key.pem
     - name: Test with pytest
       run: |
         poetry run pytest
