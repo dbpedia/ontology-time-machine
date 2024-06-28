@@ -1,173 +1,137 @@
-from proxy.http.proxy import HttpProxyBasePlugin, HttpProxyPlugin
-from proxy.http.parser import HttpParser
+from proxy.http.proxy import HttpProxyBasePlugin
+from proxy.http.parser import HttpParser, httpParserTypes
 from proxy.common.utils import build_http_response
-from proxy.http.codes import httpStatusCodes
-import requests
-import sys
+from proxy.http.methods import HttpMethods
+from ontologytimemachine.utils.utils import proxy_logic_http, proxy_logic_https
+from ontologytimemachine.utils.utils import check_if_archivo_ontology_requested
+from ontologytimemachine.utils.utils import get_headers_and_expected_type
+from requests.exceptions import SSLError, Timeout, ConnectionError, RequestException
+from http.client import responses
 import proxy
+import sys
+import requests
 import logging
-from typing import Any, Optional
 
 
 IP = '0.0.0.0'
 PORT = '8899'
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
-    dbpedia_api = 'https://archivo.dbpedia.org/download'
-
-    def __init__(
-            self,
-            *args: Any,
-            **kwargs: Any,
-    ) -> None:
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+
     def before_upstream_connection(self, request: HttpParser):
-        if request.method == b'CONNECT':
-            # Handle HTTPS connection establishment
-            host, port = request.host, request.port
-            self.client.queue(
-                build_http_response(
-                    httpStatusCodes.SWITCHING_PROTOCOLS, reason=b'Connection established', headers={
-                        b'Proxy-Agent': b'Python Proxy'
-                    }
-                )
-            )
-        return None
+        logger.debug('Before upstream')
+        scheme = 'https' if request.method == b'CONNECT' else 'http'
+        if scheme == 'https':
+            logger.debug('The request is HTTPS, forward as it is')
+            return request
+
+        ontology_request = check_if_archivo_ontology_requested(request)
+        if ontology_request:
+            logger.debug('The request is for an ontology')
+            try:
+                ontology_url = str(request._url)
+                headers, _ = get_headers_and_expected_type(request)
+                response = requests.get(ontology_url, headers=headers, timeout=5)
+                if response.status_code == 502:
+                    logger.error('Received 502 Bad Gateway error')
+                    response = proxy_logic_http(request)
+                    logger.debug('Queue response')
+                    self.queue_response(response)
+                    return None
+                else:
+                    logger.debug('The request is correct')
+                    return request
+            except (SSLError, Timeout, ConnectionError, RequestException) as e:
+                logger.error(f'Network-related exception occurred {e}')
+                response = proxy_logic_http(request)
+                logger.debug('Queue response')
+                self.queue_response(response)
+                return None
+        return request
 
 
     def handle_client_request(self, request: HttpParser):
-        # Check if the request is for google.com and provide a static response
-        if b'google.com' in request.host:
-            self.client.queue(
-                build_http_response(
-                    200, reason=b'OK', headers={
-                        b'Content-Type': b'text/plain'
-                    }, body=b'This is a static response for google.com'
-                )
-            )
-            return None
-        # Process other requests using proxy logic
-        self.proxy_logic(request)
-        return None
-
-    def proxy_logic(self, request: HttpParser):
-        self.failover_mode(request)
-        self.time_based_mode(request)
-        self.dependency_based_mode(request)
+        logger.debug('HTTP call')
 
 
-    def failover_mode(self, request):
-        logging.info('Failover mode')
-        logging.info(f'Method: {request.method}')
-        logging.info(f'URL: {request._url}')
-        scheme = 'https' if request.method == b'CONNECT' else 'http'
-        logging.info(f'Scheme: {scheme}')
+        scheme = 'https' if (request.path == None or request.host == None) else 'http'
         if scheme == 'https':
-            host = request.host.decode()
-            logging.info(f'Host: {host}')
-            port = request.port if request.port else (443 if scheme == 'https' else 80)
-            logging.info(f'Port: {port}')
-            path = request.path.decode() if request.path else '/'
-            #logging.info(f'{request.url.path}')
-            logging.info(f'Path: {path}')
-            full_url = f'{scheme}://{host}:{port}{path}'
-
-            #logging.info(response.text)
-            logging.info(full_url)
-            ontology = full_url
-        else:
-            ontology = str(request._url)
-
-        logging.info(f'Ontology: {ontology}')
+            logger.debug('The request is HTTPS, forward as it is')
+            return request
         
-        try:
-            response = requests.get(ontology)
-            #logging.info(f'{response.text}')
-            logging.info('Response received')
-            logging.info(f'Response status code: {response.status_code}')
-            content_type = response.headers.get('Content-Type', '')
-            logging.info(f'Content type: {content_type}')   
-            logging.info(f'Ontology: {ontology}')
-            if response.status_code == 200 and (content_type in ['text/turtle', 'text/html; charset=utf-8'] or 'text/html' in content_type):
-                logging.info(f'Send answer')
-                self.client.queue(
-                    build_http_response(
-                        200, reason=b'OK', headers={
-                            b'Content-Type': bytes(content_type, 'utf-8')
-                        }, body=response.content
-                    )
-                )
-            else:
-                logging.info('Content type is not text/turtle or status code is not 200, fetching from DBpedia Archivo API')
-                self.fetch_from_dbpedia_archivo_api(ontology)
+        logger.debug(request._url)
 
-        except requests.exceptions.RequestException as e:
-            logging.info(f'Exception occurred: {e}')
-            self.fetch_from_dbpedia_archivo_api(ontology)
+        ontology_request = check_if_archivo_ontology_requested(request)
+        if not ontology_request:
+            logger.info('No ontology is asked, forward original request')
+            return request    
+        
+        response = proxy_logic_http(request)
+        self.queue_response(response)
 
-
-    def time_based_mode(self, request):
-        pass
-
-
-    def dependency_based_mode(self, request):
-        pass
-
-
-    def fetch_from_dbpedia_archivo_api(self, ontology: str, format: str = 'ttl'):
-        dbpedia_url = f'{self.dbpedia_api}?o={ontology}&f={format}'
-        try:
-            logging.info(f'Fetching from DBpedia Archivo API: {dbpedia_url}')
-            response = requests.get(dbpedia_url)
-            logging.info('Response received')
-            logging.info(f'Response status code: {response.status_code}')
-            if response.status_code == 200:
-                self.client.queue(
-                    build_http_response(
-                        200, reason=b'OK', headers={
-                            b'Content-Type': b'text/turtle'
-                        }, body=response.content
-                    )
-                )
-            else:
-                self.client.queue(
-                    build_http_response(
-                        404, reason=b'Not Found', body=b'Resource not found'
-                    )
-                )
-        except requests.exceptions.RequestException as e:
-            logging.info(f'Exception occurred while fetching from DBpedia Archivo API: {e}')
-            self.client.queue(
-                build_http_response(
-                    404, reason=b'Not Found', body=b'Failed to fetch from DBpedia Archivo API'
-                )
-            )
-
+        return None
+    
 
     def handle_upstream_chunk(self, chunk: memoryview):
+        logger.info('HTTPS call')
+
+        try:
+            # Parse the HTTP response to handle different cases
+            parser = HttpParser(httpParserTypes.RESPONSE_PARSER)
+            parser.parse(memoryview(chunk))
+            code = int(parser.code.decode('utf-8'))
+            if code >= 100 and code < 200:
+                return chunk
+            elif code >= 201 and code <= 204:
+                return chunk
+            elif code == 451:
+                return chunk
+            else:
+                response = proxy_logic_https(parser)
+                logger.debug('Queue response')
+                self.queue_response(response)
+                return None
+        except UnicodeDecodeError:
+            logger.warning('Received non-text chunk, cannot decode')
+        except Exception as e:
+            logger.error(f'Exception occurred while handling upstream chunk: {e}')
+        
         return chunk
 
 
-    def on_upstream_connection_close(self):
-        pass
+        return chunk
 
-
-    def on_client_connection_close(self):
-        pass
+    def queue_response(self, response):
+        self.client.queue(
+            build_http_response(
+                response.status_code, 
+                reason=bytes(responses[response.status_code], 'utf-8'), 
+                headers={
+                    b'Content-Type': bytes(response.headers.get('Content-Type'), 'utf-8')
+                }, 
+                body=response.content
+            )
+        )
 
 
 if __name__ == '__main__':
     sys.argv += [
         '--ca-key-file', 'ca-key.pem',
         '--ca-cert-file', 'ca-cert.pem',
-        '--ca-signing-key-file', 'ca-signing-key.pem'
+        '--ca-signing-key-file', 'ca-signing-key.pem',
     ]
     sys.argv += [
         '--hostname', IP,
         '--port', PORT,
         '--plugins', __name__ + '.OntologyTimeMachinePlugin'
     ]
+    logger.info("Starting OntologyTimeMachineProxy server...")
     proxy.main()
