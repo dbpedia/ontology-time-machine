@@ -20,6 +20,20 @@ jobs:
         python -m pip install --upgrade pip
     - name: Install requirements with poetry
       run: poetry install
+    - name: Write key file
+      env:
+        CA_CERT: ${{ secrets.CA_CERT }}
+        CA_KEY: ${{ secrets.CA_KEY }}
+        CA_SIGNING_KEY: ${{ secrets.CA_SIGNING_KEY }}
+      run: |
+        echo "$CA_CERT" > ca-cert.pem
+        echo "$CA_KEY" > ca-key.pem
+        echo "$CA_SIGNING_KEY" > ca-signing-key.pem
     - name: Test with pytest
       run: |
         poetry run pytest
+    - name: Remove keys
+      run:
+        rm ca-cert.pem
+        rm ca-key.pem
+        rm ca-signing-key.pem
