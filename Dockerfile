@@ -22,5 +22,5 @@ RUN poetry config virtualenvs.create false
 RUN poetry install --no-dev && rm pyproject.toml
 
 
-CMD python3 -m proxy --hostname 0.0.0.0 --port $PORT --plugins ontologytimemachine.custom_proxy.OntologyTimeMachinePlugin
+CMD python3 -m proxy --ca-key-file ca-key.pem --ca-cert-file ca-cert.pem --ca-signing-key-file ca-signing-key.pem --hostname 0.0.0.0 --port $PORT --plugins ontologytimemachine.custom_proxy.OntologyTimeMachinePlugin
 
