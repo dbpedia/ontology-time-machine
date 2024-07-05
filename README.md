@@ -34,3 +34,6 @@ cp ca-signing-key.pem ~/ontology-time-machine/ca-signing-key.pem
 
 ### Not working: 
 - curl -x http://0.0.0.0:8899 -H "Accept: text/turtle" --cacert ca-cert.pem http://ontologi.es/days#
+
+
+# https://archivo.dbpedia.org/download?o=http://linked-web-apis.fit.cvut.cz/ns/core&v=2020.07.16-115638&versionMatching=timeStampClosest
