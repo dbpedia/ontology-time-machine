@@ -2,6 +2,7 @@ import pytest
 import requests
 import time
 import subprocess
+import itertools
 from ontologytimemachine.custom_proxy import IP, PORT
 
 
@@ -168,5 +169,25 @@ def iri_generic_test(iri):
         print(f"Request failed for IRI: {iri}, Error: {e}")
 
 
+def get_parameter_combinations():
+#       Define the possible values for each parameter
+        ontoFormat = ['turtle', 'ntriples', 'rdfxml', 'htmldocu']
+        ontoPrecedence = ['default', 'enforcedPriority', 'always']
+        patchAcceptUpstream = [True, False]
+        ontoVersion = ['original', 'originalFailoverLive', 'originalFailoverArchivoMonitor', 
+                       'latestArchive', 'timestampArchive', 'dependencyManifest']
+        onlyOntologies = [True, False]
+        httpsIntercept = [True, False]
+        inspectRedirects = [True, False]
+        forwardHeaders = [True, False]
+        subjectBinarySearchThreshold = [1, 2, 3, 4, 5, 10, 25, 50, 100]
+
+        combinations = list(itertools.product(ontoFormat, ontoPrecedence, patchAcceptUpstream, ontoVersion,
+                                              onlyOntologies, httpsIntercept, inspectRedirects,
+                                              forwardHeaders, subjectBinarySearchThreshold))
+        return combinations
+
+
 if __name__ == '__main__':
+    
     pytest.main()

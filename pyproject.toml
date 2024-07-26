@@ -11,6 +11,7 @@ python = "^3.10"
 pytest = "^8.2.1"
 requests = "^2.32.3"
 proxy-py = "^2.4.4"
+rdflib = "^7.0.0"
 
 
 [build-system]

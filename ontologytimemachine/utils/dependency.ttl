@@ -1,0 +1,25 @@
+@prefix ex-version: <https://example.org/versioning/>
+<https://example.org/ontology/> owl:imports <http://xmlns.com/foaf/spec/>, <http://purl.org/dc/terms/> ;
+    ex-version:current <https://example.org/ontology/2024-01-24> ;
+    ex-version:version
+    <https://example.org/ontology/2024-01-24> ,
+    [
+         ex-version:snapshot <https://databus.dbpedia.org/ontologies/w3.org/2020--example/2023.02.11-215415> ;
+         ex-version:file <https://archivo.dbpedia.org/download?o=https%3A//example.org/ontology/&f=ttl&v=2023.02.01-215415> ;
+         ex-version:dependency <http://xmlns.com/foaf/spec/20100101.html>, <https://databus.dbpedia.org/ontologies/w3.org/2020--dct/2020.05.23-215415> ;
+    ] .
+
+<https://example.org/ontology/2024-01-24>
+    ex-version:snapshot <https://databus.dbpedia.org/ontologies/w3.org/2020--example/2024.01.24-215415> ;
+    ex-version:file <https://archivo.dbpedia.org/download?o=https%3A//example.org/ontology/&f=ttl&v=2024.01.24-215415> ;
+    ex-version:dependency <http://xmlns.com/foaf/spec/20140114.html>, <https://databus.dbpedia.org/ontologies/w3.org/2020--dct/2020.05.23-215415> ;
+]
+
+<http://xmlns.com/foaf/spec/20100101.html> ex-version:snapshot <http://xmlns.com/foaf/spec/20100101.html> ;
+    ex-version:file <http://xmlns.com/foaf/spec/20100101.rdf> .
+         
+<http://xmlns.com/foaf/spec/20140114.html> ex-version:snapshot <http://xmlns.com/foaf/spec/20140114.html> ;
+    ex-version:file <http://xmlns.com/foaf/spec/20140114.rdf> .
+
+<https://databus.dbpedia.org/ontologies/w3.org/2020--dct/2020.05.23-215415> ex-version:snapshot <https://databus.dbpedia.org/ontologies/w3.org/2020--dct/2020.05.23-215415> ;
+    ex-version:file <https://archivo.dbpedia.org/download?o=http%3A//purl.org/dc/terms/&f=ttl&v=2020.05.23-215415> .

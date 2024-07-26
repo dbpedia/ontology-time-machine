@@ -103,5 +103,6 @@ if __name__ == '__main__':
         '--port', PORT,
         '--plugins', __name__ + '.OntologyTimeMachinePlugin'
     ]
+
     logger.info("Starting OntologyTimeMachineProxy server...")
     proxy.main()

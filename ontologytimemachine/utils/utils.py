@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 import logging
 import requests
 import argparse
+import rdflib
 import mimetypes
 
 
@@ -124,7 +125,7 @@ def get_ontology_from_request(request):
             if v[0].decode('utf-8') == 'Host':
                 host = v[1].decode('utf-8')
                 path = request.path.decode('utf-8')
-        ontology = 'https://' + host + request.path.decode('utf-8')
+        ontology = 'https://' + host + path
     else:
         host = request.host.decode('utf-8')
         path = request.path.decode('utf-8')
@@ -168,7 +169,7 @@ def proxy_logic(request: HttpParser, ontoFormat, ontoVersion):
         response = fetch_original(ontology, headers)
     elif ontoVersion == 'originalFailoverLive':
         response = fetch_failover(ontology, headers, live=True)
-    elif ontoVersion == 'originalFailoverMonitor':
+    elif ontoVersion == 'originalFailoverArchivoontoVersionMonitor':
         response = fetch_failover(ontology, headers, monitor=True)
     elif ontoVersion == 'latestArchive':
         response = fetch_latest_archive(ontology, headers)
@@ -233,7 +234,38 @@ def fetch_timestamp_archive(ontology, headers):
 
 
 def fetch_dependency_manifest(ontology, headers):
-    return mock_response_404
+    dependencies_file = "ontologytimemachine/utils/dependency.ttl"
+    # Parse RDF data from the dependencies file
+    g = rdflib.Graph()
+    g.parse(dependencies_file, format="turtle")
+
+    version_namespace = rdflib.Namespace("https://example.org/versioning/")
+
+    # Extract dependencies related to the ontology link
+    ontology = rdflib.URIRef(ontology)
+    
+    dependencies = g.subjects(predicate=version_namespace.dependency, object=ontology)
+
+    for dependency in dependencies:
+        dep_snapshot = g.value(subject=dependency, predicate=version_namespace.snapshot)
+        dep_file = g.value(subject=dependency, predicate=version_namespace.file)
+        
+        # Make request to DBpedia archive API
+        base_api_url = "https://archivo.dbpedia.org/download"
+        
+        if dep_file:
+            version_param = dep_file.split('v=')[1]
+            api_url = f"{base_api_url}?o={ontology}&v={version_param}"
+        else:
+            api_url = f"{base_api_url}?o={ontology}"
+            
+        response = requests.get(api_url)
+        if response.status_code == 200:
+            logger.info(f"Successfully fetched {api_url}")
+            return response
+        else:
+            logger.error(f"Failed to fetch {api_url}, status code: {response.status_code}")
+            return mock_response_404
 
 
 def failover_mode(request):
