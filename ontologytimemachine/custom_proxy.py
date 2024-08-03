@@ -2,15 +2,13 @@ from proxy.http.proxy import HttpProxyBasePlugin
 from proxy.http.parser import HttpParser, httpParserTypes
 from proxy.common.utils import build_http_response
 from proxy.http.methods import HttpMethods
-from ontologytimemachine.utils.utils import proxy_logic_http, proxy_logic_https
+from ontologytimemachine.utils.utils import proxy_logic, parse_arguments
 from ontologytimemachine.utils.utils import check_if_archivo_ontology_requested
-from ontologytimemachine.utils.utils import get_headers_and_expected_type
-from ontologytimemachine.utils.utils import get_ontology_from_request
+from ontologytimemachine.utils.mock_responses import mock_response_403
 from requests.exceptions import SSLError, Timeout, ConnectionError, RequestException
 from http.client import responses
 import proxy
 import sys
-import requests
 import logging
 
 
@@ -18,74 +16,65 @@ IP = '0.0.0.0'
 PORT = '8899'
 
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-
 
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        (self.ontoFormat, self.ontoVersion, self.only_ontologies,
+         self.https_intercept, self.inspect_redirects, self.forward_headers,
+         self.subject_binary_search_threshold) = parse_arguments()
 
 
     def before_upstream_connection(self, request: HttpParser):
-        logger.debug('Before upstream')
-        logger.debug(request.method)
-        scheme = 'https' if request.method == b'CONNECT' else 'http'
-        if scheme == 'https':
-            logger.debug('The request is HTTPS, forward as it is')
-            logger.debug(f'Request host: {request.host}')
-            logger.debug(f'Request path: {request.path}')
-            return request
+        logger.info('Before upstream connection hook')
+        logger.info(f'Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}')
+
+        if request.method == b'CONNECT':
+            logger.info(f'HTTPS interception mode: {self.https_intercept}')
+            # Only intercept if interception is enabled
+            if self.https_intercept in ['all', 'archivo']:
+                return request
+            else:
+                return None
+            
 
         ontology_request = check_if_archivo_ontology_requested(request)
+        # If only ontology mode, return None in all other cases
+        if self.only_ontologies and not ontology_request:
+            logger.warning('Request denied: not an ontology request and only ontologies mode is enabled')
+            self.queue_response(mock_response_403)
+            return None
+        
         if ontology_request:
             logger.debug('The request is for an ontology')
-            try:
-                ontology_url = str(request._url)
-                headers, _ = get_headers_and_expected_type(request)
-                response = requests.get(ontology_url, headers=headers, timeout=5)
-                if response.status_code == 502:
-                    logger.error('Received 502 Bad Gateway error')
-                    response = proxy_logic_http(request)
-                    logger.debug('Queue response')
-                    self.queue_response(response)
-                    return None
-                else:
-                    logger.debug('The request is correct')
-                    return request
-            except (SSLError, Timeout, ConnectionError, RequestException) as e:
-                logger.error(f'Network-related exception occurred {e}')
-                response = proxy_logic_http(request)
-                logger.debug('Queue response')
-                self.queue_response(response)
-                return None
+            response = proxy_logic(request, self.ontoFormat, self.ontoVersion)
+            self.queue_response(response)
+            return None
         return request
 
 
     def handle_client_request(self, request: HttpParser):
-        logger.debug('HTTP call')
+        logger.info('Handle client request hook')
+        logger.info(f'Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}')
 
         logger.debug(request.method)
-        scheme = 'https' if request.method == b'CONNECT' else 'http'
-        if scheme == 'https':
-            logger.debug('The request is HTTPS, forward as it is')
+        if request.method == b'CONNECT':
             return request
 
         ontology_request = check_if_archivo_ontology_requested(request)
         if not ontology_request:
-            logger.info('No ontology is asked, forward original request')
+            logger.info('The requested IRI is not part of DBpedia Archivo')
             return request   
 
-        logger.debug('Call proxy logic')
-        response = proxy_logic_http(request)
+        response = proxy_logic(request, self.ontoFormat, self.ontoVersion)
         self.queue_response(response)
 
         return None
     
 
     def handle_upstream_chunk(self, chunk: memoryview):
-        logger.info('HTTPS call')
-
         return chunk
 
 
@@ -103,6 +92,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
 
 if __name__ == '__main__':
+
     sys.argv += [
         '--ca-key-file', 'ca-key.pem',
         '--ca-cert-file', 'ca-cert.pem',
