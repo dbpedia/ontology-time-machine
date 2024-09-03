@@ -102,16 +102,6 @@ def test_data_ontotext():
     generic_test(iri, 'text/turtle')
 
 
-def test_data_opendiscoveryspace():
-    iri = 'http://data.opendiscoveryspace.eu/lom_ontology_ods.owl#'
-    generic_test(iri, 'text/turtle')
-
-
-def test_data_ordnancesurvey_50kGazetteer():
-    iri = 'http://data.ordnancesurvey.co.uk/ontology/50kGazetteer/'
-    generic_test(iri, 'text/turtle')
-
-
 def test_data_ordnancesurvey_50kGazetteer():
     iri = 'http://dbpedia.org/ontology/Person'
     generic_test(iri, 'text/turtle')
