@@ -21,13 +21,7 @@ def start_proxy_server():
     # Start the proxy server in a subprocess
     process = subprocess.Popen(
         [
-            'python3', '-m', 'proxy', 
-            '--ca-key-file', 'ca-key.pem',
-            '--ca-cert-file', 'ca-cert.pem',
-            '--ca-signing-key-file', 'ca-signing-key.pem',
-            '--hostname', IP, 
-            '--port', PORT, 
-            '--plugins', 'ontologytimemachine.custom_proxy.OntologyTimeMachinePlugin'
+            'python3', 'ontologytimemachine/custom_proxy.py', 
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
@@ -126,29 +120,6 @@ def test_data_ordnancesurvey_50kGazetteer():
 def test_linked_web_apis():
     iri = 'http://linked-web-apis.fit.cvut.cz/ns/core'
     generic_test(iri, 'text/turtle')
-
-
-#def test_ontologi_es():
-#    iri = 'http://ontologi.es/days#'
-#    generic_test(iri, 'text/turtle')
-
-
-def test_https():
-    iri = "https://www.w3id.org/simulation/ontology/"
-    generic_test(iri, 'text/plain; charset=utf-8')
-
-
-def test_https():
-    iri = "https://vocab.eccenca.com/auth/"
-    generic_test(iri, 'text/plain; charset=utf-8')
-
-
-def not_test_all_iris():
-    with open('tests/archivo_ontologies_test.txt', 'r') as file:
-        for line in file:
-            iri = line.strip()
-            if iri:  # Ensure it's not an empty line
-                iri_generic_test(iri)
 
 
 def generic_test(iri, content_type):
