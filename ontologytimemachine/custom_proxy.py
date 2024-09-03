@@ -15,6 +15,7 @@ import logging
 IP = '0.0.0.0'
 PORT = '8899'
 
+config = None
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -24,7 +25,8 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         super().__init__(*args, **kwargs)
         (self.ontoFormat, self.ontoVersion, self.only_ontologies,
          self.https_intercept, self.inspect_redirects, self.forward_headers,
-         self.subject_binary_search_threshold) = parse_arguments()
+         self.subject_binary_search_threshold) = config
+        logger.info(config)
 
 
     def before_upstream_connection(self, request: HttpParser):
@@ -93,6 +95,15 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
 if __name__ == '__main__':
 
+    config = parse_arguments()
+    
+
+    print('Cionfig')
+    print(config)
+    print(sys.argv)
+
+    sys.argv = [sys.argv[0]] # TODO: fix this
+
     sys.argv += [
         '--ca-key-file', 'ca-key.pem',
         '--ca-cert-file', 'ca-cert.pem',
@@ -103,6 +114,8 @@ if __name__ == '__main__':
         '--port', PORT,
         '--plugins', __name__ + '.OntologyTimeMachinePlugin'
     ]
+
+    print(sys.argv)
 
     logger.info("Starting OntologyTimeMachineProxy server...")
     proxy.main()

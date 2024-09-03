@@ -27,6 +27,7 @@ passthrough_status_codes_http = [
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Process ontology format and version.')
 
+
     # Defining ontoFormat argument with nested options
     parser.add_argument('--ontoFormat', type=str, choices=['turtle', 'ntriples', 'rdfxml', 'htmldocu'],
                         default='turtle', help='Format of the ontology: turtle, ntriples, rdfxml, htmldocu')
@@ -61,25 +62,6 @@ def parse_arguments():
     # SubjectBinarySearchThreshold
     parser.add_argument('--subjectBinarySearchThreshold', type=int, default=100,
                         help='SubjectBinarySearchThreshold value.')
-
-    # Proxy native parameters
-    parser.add_argument('--ca-key-file', type=str, required=True,
-                        help='Path to the CA key file.')
-
-    parser.add_argument('--ca-cert-file', type=str, required=True,
-                        help='Path to the CA certificate file.')
-
-    parser.add_argument('--ca-signing-key-file', type=str, required=True,
-                        help='Path to the CA signing key file.')
-
-    parser.add_argument('--hostname', type=str, required=True,
-                        help='Hostname for the proxy server.')
-
-    parser.add_argument('--port', type=int, required=True,
-                        help='Port for the proxy server.')
-
-    parser.add_argument('--plugins', type=str, required=True,
-                        help='Plugins for the proxy server.')
 
     args  = parser.parse_args()
     
@@ -120,6 +102,10 @@ def get_headers(request):
 
 def get_ontology_from_request(request):
     logger.info('Get ontology from request')
+    print(f'Request protocol: {request.protocol}')
+    print(f'Request host: {request.host}')
+    print(f'Request _url: {request._url}')
+    print(f'Request path: {request.path}')
     if (request.method == b'GET' or request.method == b'HEAD') and not request.host:
         for k, v in request.headers.items():
             if v[0].decode('utf-8') == 'Host':
@@ -134,11 +120,17 @@ def get_ontology_from_request(request):
     return ontology, host, path
 
 
-def get_mime_type(format):
-    # Guess the MIME type based on the format
-    mime_type, _ = mimetypes.guess_type(f'file.{format}')
-    # Return the guessed MIME type or a generic default if guessing fails
-    return mime_type or 'text/turtle'
+def get_mime_type(format='turtle'):
+    # Define a mapping of formats to MIME types
+    format_to_mime = {
+        'turtle': 'text/turtle',
+        'ntriples': 'application/n-triples',
+        'rdfxml': 'application/rdf+xml',
+        'htmldocu': 'text/html'
+    }
+    
+    # Return the MIME type based on the format or use a generic default
+    return format_to_mime.get(format, 'text/turtle')
 
 
 def set_onto_format_headers(request, ontoFormat, ontoVersion):
@@ -146,10 +138,14 @@ def set_onto_format_headers(request, ontoFormat, ontoVersion):
 
     # Determine the correct MIME type for the format
     mime_type = get_mime_type(ontoFormat['format'])
+    logger.info(f'Requested mimetype: {mime_type}')
 
     # Check the precedence and update the 'Accept' header if necessary
-    if ontoFormat['precedence'] in ['always', 'enforcedPriority'] or \
-       (ontoFormat['precedence'] == 'default' and b'accept' not in request.headers):
+    if ontoFormat['precedence'] in ['always'] or \
+       (ontoFormat['precedence'] == 'default' and request.headers[b'accept'][1] == b'*/*') or \
+        request.headers[b'accept'][1] == b'*/*':
+        # Needed to make sure the accept header is define
+        # TODO: Clean up the conditions
         request.headers[b'accept'] = (b'Accept', mime_type.encode('utf-8'))
         logger.info(f'Accept header set to: {request.headers[b"accept"][1]}')
 
@@ -199,7 +195,11 @@ def fetch_failover(ontology, headers, live=False, monitor=False):
         logger.info(f'Fetching original ontology with failover from URL: {ontology}')
         response = requests.get(url=ontology, headers=headers, timeout=5)
         logger.info('Successfully fetched original ontology')
-        if response.status_code in passthrough_status_codes_http:
+        requested_mime_type = headers.get('Accept', None)  # Assuming you set the requested MIME type in the 'Accept' header
+        response_mime_type = response.headers.get('Content-Type', '').split(';')[0]
+        logger.info(f'Requested mimetype: {requested_mime_type}')
+        logger.info(f'Response mimetype: {response_mime_type}')
+        if response.status_code in passthrough_status_codes_http and requested_mime_type == response_mime_type:
                 return response
         else:
             logging.info(f'Status code: {response.status_code}')
@@ -299,6 +299,7 @@ def fetch_from_dbpedia_archivo_api(ontology, headers):
     try:
         logger.info(f'Fetching from DBpedia Archivo API: {dbpedia_url}')
         response = requests.get(dbpedia_url, timeout=5)
+        print(response)
         return response
     except requests.exceptions.RequestException as e:
         logging.error(f'Exception occurred while fetching from DBpedia Archivo API: {e}')
@@ -306,21 +307,15 @@ def fetch_from_dbpedia_archivo_api(ontology, headers):
     
 
 def map_mime_to_format(mime_type):
-    # Use the mimetypes library to get the file extension
-    extension = mimetypes.guess_extension(mime_type)
-    if not extension:
-        return None
-    
     # Map file extensions to formats
-    ext_to_format = {
-        '.rdf': 'owl',
-        '.xml': 'owl',
-        '.ttl': 'ttl',
-        '.nt': 'nt',
-        # Add more mappings if needed
+    mime_to_format = {
+        'application/rdf+xml': 'owl',       # Common MIME type for OWL files
+        'application/owl+xml': 'owl',       # Specific MIME type for OWL
+        'text/turtle': 'ttl',               # MIME type for Turtle format
+        'application/n-triples': 'nt',      # MIME type for N-Triples format
     }
     
-    return ext_to_format.get(extension, None)
+    return mime_to_format.get(mime_type, None)
 
 
 def get_parameters_from_headers(headers):

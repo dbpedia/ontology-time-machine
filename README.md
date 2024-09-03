@@ -35,3 +35,6 @@ cp ca-signing-key.pem ~/ontology-time-machine/ca-signing-key.pem
 ### Not working: 
 - curl -x http://0.0.0.0:8899 -H "Accept: text/turtle" --cacert ca-cert.pem http://ontologi.es/days#
 
+
+
+python3 -m proxy --ca-key-file ca-key.pem --ca-cert-file ca-cert.pem --ca-signing-key-file ca-signing-key.pem --hostname IP --port 8899 --plugins ontologytimemachine.custom_proxy.OntologyTimeMachinePlugin --ontoFormat ntriples --ontoVersion originalFailoverLive --ontoPrecedence enforcedPriority
