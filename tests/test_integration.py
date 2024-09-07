@@ -97,14 +97,14 @@ def start_proxy_server():
 #     generic_test(iri, 'text/turtle')
 
 
-# def test_data_ontotext():
-#     iri = 'http://data.ontotext.com/resource/leak/'
-#     generic_test(iri, 'text/turtle')
-
-
-def test_data_ordnancesurvey_50kGazetteer():
-    iri = 'http://dbpedia.org/ontology/Person'
+def test_data_ontotext():
+    iri = 'http://data.ontotext.com/resource/leak/'
     generic_test(iri, 'text/turtle')
+
+
+# def test_data_ordnancesurvey_50kGazetteer():
+#     iri = 'http://dbpedia.org/ontology/Person'
+#     generic_test(iri, 'text/turtle')
 
 
 def test_linked_web_apis():

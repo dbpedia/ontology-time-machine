@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, Mock
 import argparse
 import requests
+
 from ontologytimemachine.utils.mock_responses import (
     mock_response_200,
     mock_response_403,
@@ -9,12 +10,14 @@ from ontologytimemachine.utils.mock_responses import (
     mock_response_500
 )
 from ontologytimemachine.utils.utils import (
-    parse_arguments,
-    fetch_from_dbpedia_archivo_api, 
+    parse_arguments, 
     map_mime_to_format, 
     get_parameters_from_headers
 )
 
+from ontologytimemachine.utils.proxy_logic import (
+    fetch_from_dbpedia_archivo_api
+)
 
 class TestUtils(unittest.TestCase):
 
@@ -28,8 +31,7 @@ class TestUtils(unittest.TestCase):
             onlyOntologies=True,
             httpsIntercept=False,
             inspectRedirects=True,
-            forwardHeaders=True,
-            subjectBinarySearchThreshold=100
+            forwardHeaders=True
         )
 
         args = parse_arguments()
@@ -42,7 +44,6 @@ class TestUtils(unittest.TestCase):
         self.assertFalse(args[3])
         self.assertTrue(args[4])
         self.assertTrue(args[5])
-        self.assertEqual(args[6], 100)
         
         mock_parse_args.return_value = argparse.Namespace(
             ontoFormat='ntriples', 
@@ -52,8 +53,7 @@ class TestUtils(unittest.TestCase):
             onlyOntologies=False,
             httpsIntercept=True,
             inspectRedirects=False,
-            forwardHeaders=False,
-            subjectBinarySearchThreshold=50
+            forwardHeaders=False
         )
 
         args = parse_arguments()
@@ -66,7 +66,6 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(args[3])
         self.assertFalse(args[4])
         self.assertFalse(args[5])
-        self.assertEqual(args[6], 50)
 
         
     @patch('requests.get')
