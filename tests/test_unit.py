@@ -12,11 +12,11 @@ from ontologytimemachine.utils.mock_responses import (
 from ontologytimemachine.utils.utils import (
     parse_arguments, 
     map_mime_to_format, 
-    get_parameters_from_headers
+    get_format_from_accept_header
 )
 
 from ontologytimemachine.utils.proxy_logic import (
-    fetch_from_dbpedia_archivo_api
+    fetch_latest_archived
 )
 
 class TestUtils(unittest.TestCase):
@@ -28,9 +28,9 @@ class TestUtils(unittest.TestCase):
             ontoPrecedence='enforcedPriority', 
             patchAcceptUpstream=False,
             ontoVersion='originalFailoverLive',
-            onlyOntologies=True,
-            httpsIntercept=False,
-            inspectRedirects=True,
+            restrictedAccess=True,
+            httpsInterception=False,
+            disableRemovingRedirects=True,
             forwardHeaders=True
         )
 
@@ -50,9 +50,9 @@ class TestUtils(unittest.TestCase):
             ontoPrecedence='default', 
             patchAcceptUpstream=True,
             ontoVersion='latestArchive',
-            onlyOntologies=False,
-            httpsIntercept=True,
-            inspectRedirects=False,
+            restrictedAccess=False,
+            httpsInterception=True,
+            disableRemovingRedirects=False,
             forwardHeaders=False
         )
 
@@ -69,7 +69,7 @@ class TestUtils(unittest.TestCase):
 
         
     @patch('requests.get')
-    def test_fetch_from_dbpedia_archivo_api(self, mock_get):
+    def test_fetch_latest_archived(self, mock_get):
         mock_response = Mock()
         mock_response.status_code = 200
         mock_get.return_value = mock_response
@@ -77,11 +77,11 @@ class TestUtils(unittest.TestCase):
         ontology = 'http://dbpedia.org/ontology/Person'
         headers = {'Accept': 'text/turtle'}
         
-        response = fetch_from_dbpedia_archivo_api(ontology, headers)
+        response = fetch_latest_archived(ontology, headers)
         self.assertEqual(response.status_code, 200)
         
         mock_get.side_effect = requests.exceptions.RequestException
-        response = fetch_from_dbpedia_archivo_api(ontology, headers)
+        response = fetch_latest_archived(ontology, headers)
         self.assertEqual(response.status_code, 404)
         
     def test_map_mime_to_format(self):
@@ -90,27 +90,19 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(map_mime_to_format('application/n-triples'), 'nt')
         self.assertIsNone(map_mime_to_format('unknown/mime'))
         
-    def test_get_parameters_from_headers(self):
-        headers = {
-            'Accept': 'application/rdf+xml',
-            'Version': '1.0',
-            'VersionMatching': 'exact'
-        }
-        format, version, versionMatching = get_parameters_from_headers(headers)
-        self.assertEqual(format, 'owl')
-        self.assertEqual(version, '1.0')
-        self.assertEqual(versionMatching, 'exact')
+    def test_get_format_from_accept_header(self):
+        headers = {'Accept': 'application/json'}
+        format = get_format_from_accept_header(headers)
+        self.assertEqual(format, None)
         
-        headers = {
-            'Accept': 'unknown/mime',
-            'Version': '2.0',
-            'VersionMatching': 'compatible'
-        }
-        format, version, versionMatching = get_parameters_from_headers(headers)
-        self.assertIsNone(format)
-        self.assertEqual(version, '2.0')
-        self.assertEqual(versionMatching, 'compatible')
+        headers = {}
+        format = get_format_from_accept_header(headers)
 
+        self.assertIsNone(format, None)
+
+        headers = {'Accept': 'text/turtle'}
+        format = get_format_from_accept_header(headers)
+        self.assertEqual(format, 'ttl')
 
 
 class TestMockResponses(unittest.TestCase):

@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        (self.ontoFormat, self.ontoVersion, self.only_ontologies,
-         self.https_intercept, self.inspect_redirects, 
-         self.forward_headers) = config
+        (self.ontoFormat, self.ontoVersion, self.restrictedAccess,
+         self.httpsInterception, self.disableRemovingRedirects, 
+         self.forward_headers, self.timestamp, self.manifest) = config
         logger.info(config)
 
     def before_upstream_connection(self, request: HttpParser):
@@ -35,10 +35,10 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         wrapped_request = HttpRequestWrapper(request)
 
         if wrapped_request.is_connect_request():
-            logger.info(f'HTTPS interception mode: {self.https_intercept}')
+            logger.info(f'HTTPS interception mode: {self.httpsInterception}')
             # Only intercept if interception is enabled
             # Move this to the utils
-            if if_intercept_host(self.https_intercept):
+            if if_intercept_host(self.httpsInterception):
                 logger.info('HTTPS interception is on, forwardig the request')
                 return request
             else:
@@ -46,14 +46,14 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 return None
 
         # If only ontology mode, return None in all other cases
-        if is_ontology_request_only_ontology(wrapped_request, self.only_ontologies):
+        if is_ontology_request_only_ontology(wrapped_request, self.restrictedAccess):
             logger.warning('Request denied: not an ontology request and only ontologies mode is enabled')
             self.queue_response(mock_response_403)
             return None
         
         if is_archivo_ontology_request(wrapped_request):
             logger.debug('The request is for an ontology')
-            response = proxy_logic(wrapped_request, self.ontoFormat, self.ontoVersion)
+            response = proxy_logic(wrapped_request, self.ontoFormat, self.ontoVersion, self.disableRemovingRedirects, self.timestamp, self.manifest)
             self.queue_response(response)
             return None
         return request
@@ -71,7 +71,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             logger.info('The requested IRI is not part of DBpedia Archivo')
             return request   
 
-        response = proxy_logic(wrapped_request, self.ontoFormat, self.ontoVersion)
+        response = proxy_logic(wrapped_request, self.ontoFormat, self.ontoVersion, self.disableRemovingRedirects, self.timestamp, self.manifest)
         self.queue_response(response)
 
         return None
