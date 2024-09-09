@@ -16,7 +16,7 @@ import logging
 IP = '0.0.0.0'
 PORT = '8899'
 
-config = None
+config = ({'format': 'turtle', 'precedence': 'enforcedPriority', 'patchAcceptUpstream': False}, 'originalFailoverLiveLatest', False, 'all', False, True, None, None)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         (self.ontoFormat, self.ontoVersion, self.restrictedAccess,
          self.httpsInterception, self.disableRemovingRedirects, 
          self.forward_headers, self.timestamp, self.manifest) = config
-        logger.info(config)
+        logger.info()
 
     def before_upstream_connection(self, request: HttpParser):
         logger.info('Before upstream connection hook')
@@ -98,18 +98,19 @@ if __name__ == '__main__':
 
     sys.argv = [sys.argv[0]] # TODO: fix this
 
-    sys.argv += [
-        '--ca-key-file', 'ca-key.pem',
-        '--ca-cert-file', 'ca-cert.pem',
-        '--ca-signing-key-file', 'ca-signing-key.pem',
-    ]
+    # check it https interception is enabled
+    if config[3] != 'none':
+        sys.argv += [
+            '--ca-key-file', 'ca-key.pem',
+            '--ca-cert-file', 'ca-cert.pem',
+            '--ca-signing-key-file', 'ca-signing-key.pem',
+        ]
+
     sys.argv += [
         '--hostname', IP,
         '--port', PORT,
         '--plugins', __name__ + '.OntologyTimeMachinePlugin'
     ]
-
-    print(sys.argv)
 
     logger.info("Starting OntologyTimeMachineProxy server...")
     proxy.main()

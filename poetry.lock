@@ -2,13 +2,13 @@
 
 [[package]]
 name = "certifi"
-version = "2024.6.2"
+version = "2024.8.30"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "certifi-2024.6.2-py3-none-any.whl", hash = "sha256:ddc6c8ce995e6987e7faf5e3f1b02b302836a0e5d98ece18392cb1a36c72ad56"},
-    {file = "certifi-2024.6.2.tar.gz", hash = "sha256:3cd43f1c6fa7dedc5899d69d3ad0398fd018ad1a17fba83ddaf78aa46c747516"},
+    {file = "certifi-2024.8.30-py3-none-any.whl", hash = "sha256:922820b53db7a7257ffbda3f597266d435245903d80737e34f8a45ff3e3230d8"},
+    {file = "certifi-2024.8.30.tar.gz", hash = "sha256:bec941d2aa8195e248a60b31ff9f0558284cf01a52591ceda73ea9afffd69fd9"},
 ]
 
 [[package]]
@@ -123,13 +123,13 @@ files = [
 
 [[package]]
 name = "exceptiongroup"
-version = "1.2.1"
+version = "1.2.2"
 description = "Backport of PEP 654 (exception groups)"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "exceptiongroup-1.2.1-py3-none-any.whl", hash = "sha256:5258b9ed329c5bbdd31a309f53cbfb0b155341807f6ff7606a1e801a891b29ad"},
-    {file = "exceptiongroup-1.2.1.tar.gz", hash = "sha256:a4785e48b045528f5bfe627b6ad554ff32def154f42372786903b7abcfe1aa16"},
+    {file = "exceptiongroup-1.2.2-py3-none-any.whl", hash = "sha256:3111b9d131c238bec2f8f516e123e14ba243563fb135d3fe885990585aa7795b"},
+    {file = "exceptiongroup-1.2.2.tar.gz", hash = "sha256:47c2edf7c6738fafb49fd34290706d1a1a2f4d1c6df275526b62cbb4aa5393cc"},
 ]
 
 [package.extras]
@@ -137,13 +137,13 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "idna"
-version = "3.7"
+version = "3.8"
 description = "Internationalized Domain Names in Applications (IDNA)"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.6"
 files = [
-    {file = "idna-3.7-py3-none-any.whl", hash = "sha256:82fee1fc78add43492d3a1898bfa6d8a904cc97d8427f683ed8e798d07761aa0"},
-    {file = "idna-3.7.tar.gz", hash = "sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc"},
+    {file = "idna-3.8-py3-none-any.whl", hash = "sha256:050b4e5baadcd44d760cedbd2b8e639f2ff89bbc7a5730fcc662954303377aac"},
+    {file = "idna-3.8.tar.gz", hash = "sha256:d838c2c0ed6fced7693d5e8ab8e734d5f8fda53a039c0164afb0b82e771e3603"},
 ]
 
 [[package]]
@@ -242,13 +242,13 @@ files = [
 
 [[package]]
 name = "packaging"
-version = "24.0"
+version = "24.1"
 description = "Core utilities for Python packages"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "packaging-24.0-py3-none-any.whl", hash = "sha256:2ddfb553fdf02fb784c234c7ba6ccc288296ceabec964ad2eae3777778130bc5"},
-    {file = "packaging-24.0.tar.gz", hash = "sha256:eb82c5e3e56209074766e6885bb04b8c38a0c015d0a30036ebe7ece34c9989e9"},
+    {file = "packaging-24.1-py3-none-any.whl", hash = "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"},
+    {file = "packaging-24.1.tar.gz", hash = "sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002"},
 ]
 
 [[package]]
@@ -268,24 +268,30 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "proxy-py"
-version = "2.4.4"
-description = "⚡ Fast • 🪶 Lightweight • 0️⃣ Dependency • 🔌 Pluggable • 😈 TLS interception • 🔒 DNS-over-HTTPS • 🔥 Poor Mans VPN • ⏪ Reverse & ⏩ Forward • 👮🏿 Proxy Server framework • 🌐 Web Server framework • ➵ ➶ ➷ ➠ PubSub framework • 👷 Work acceptor & executor framework."
+version = "2.4.7"
+description = "\\u26a1 Fast \\u2022 \\U0001fab6 Lightweight \\u2022 \\U0001f51f Dependency \\u2022 \\U0001f50c Pluggable \\u2022 \\U0001f608 TLS interception \\u2022 \\U0001f512 DNS-over-HTTPS \\u2022 \\U0001f525 Poor Mans VPN \\u2022 \\u23ea Reverse & \\u23e9 Forward \\u2022 \\U0001f46e\\U0001f3ff Proxy Server framework \\u2022 \\U0001f310 Web Server framework \\u2022 \\u27b5 \\u27b6 \\u27b7 \\u27a0 PubSub framework \\u2022 \\U0001f477 Work acceptor & executor framework."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "proxy.py-2.4.4-py3-none-any.whl", hash = "sha256:8d02fa2f1f94ad5bee96962c7b02badb9b4075d1a99d31700577ea15713ba4d3"},
-    {file = "proxy_py-2.4.4.tar.gz", hash = "sha256:216581f70ad673f4ecb5f6b27f52491aaf1c056829f4a670f5ea3b5a340f4272"},
+    {file = "proxy.py-2.4.7-py3-none-any.whl", hash = "sha256:83ddfda5479403434eace531c2bdef41fd9091df473a4051cd9df1564de056a9"},
+    {file = "proxy_py-2.4.7.tar.gz", hash = "sha256:2e20ad717025cdee92d528be1321b7af8743d941e56de2ae6f390c6dc67aaad1"},
 ]
+
+[package.extras]
+metrics = ["prometheus-client (==0.17.1)", "prometheus-client (==0.20.0)"]
+release = ["setuptools-scm (==6.3.2)", "twine (==3.8.0)"]
+testing = ["autopep8 (==1.6.0)", "coverage (==6.2)", "coverage (==7.4.4)", "flake8 (==4.0.1)", "h2 (==4.1.0)", "hpack (==4.0.0)", "httpx (==0.22.0)", "httpx (==0.27.0)", "hyperframe (==6.0.1)", "mccabe (==0.6.1)", "mypy (==0.971)", "pre-commit (==2.16.0)", "py-spy (==0.3.12)", "pylint (==2.13.7)", "pylint (==3.1.0)", "pytest (==7.0.1)", "pytest (==8.1.1)", "pytest-asyncio (==0.16.0)", "pytest-asyncio (==0.21.1)", "pytest-cov (==3.0.0)", "pytest-cov (==5.0.0)", "pytest-mock (==3.14.0)", "pytest-mock (==3.6.1)", "pytest-xdist (==2.5.0)", "pytest-xdist (==3.5.0)", "python-coveralls (==2.9.3)", "rope (==1.1.1)", "tox (==3.28.0)", "tox (==4.14.2)", "types-requests (==2.28.11.5)", "types-setuptools (==64.0.1)", "wheel (==0.37.1)"]
+tunnel = ["cryptography (==36.0.2)", "cryptography (==39.0.1)", "paramiko (==2.11.0)", "paramiko (==3.4.0)", "types-paramiko (==2.11.3)", "types-paramiko (==3.4.0.20240311)"]
 
 [[package]]
 name = "pyparsing"
-version = "3.1.2"
+version = "3.1.4"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
 optional = false
 python-versions = ">=3.6.8"
 files = [
-    {file = "pyparsing-3.1.2-py3-none-any.whl", hash = "sha256:f9db75911801ed778fe61bb643079ff86601aca99fcae6345aa67292038fb742"},
-    {file = "pyparsing-3.1.2.tar.gz", hash = "sha256:a1bac0ce561155ecc3ed78ca94d3c9378656ad4c94c1270de543f621420f94ad"},
+    {file = "pyparsing-3.1.4-py3-none-any.whl", hash = "sha256:a6a7ee4235a3f944aa1fa2249307708f893fe5717dc603503c6c7969c070fb7c"},
+    {file = "pyparsing-3.1.4.tar.gz", hash = "sha256:f86ec8d1a83f11977c9a6ea7598e8c27fc5cddfa5b07ea2241edbbde1d7bc032"},
 ]
 
 [package.extras]
@@ -293,13 +299,13 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pytest"
-version = "8.2.2"
+version = "8.3.2"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.2.2-py3-none-any.whl", hash = "sha256:c434598117762e2bd304e526244f67bf66bbd7b5d6cf22138be51ff661980343"},
-    {file = "pytest-8.2.2.tar.gz", hash = "sha256:de4bb8104e201939ccdc688b27a89a7be2079b22e2bd2b07f806b6ba71117977"},
+    {file = "pytest-8.3.2-py3-none-any.whl", hash = "sha256:4ba08f9ae7dcf84ded419494d229b48d0903ea6407b030eaec46df5e6a73bba5"},
+    {file = "pytest-8.3.2.tar.gz", hash = "sha256:c132345d12ce551242c87269de812483f5bcc87cdbb4722e48487ba194f9fdce"},
 ]
 
 [package.dependencies]
@@ -307,7 +313,7 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=1.5,<2.0"
+pluggy = ">=1.5,<2"
 tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 
 [package.extras]
@@ -379,13 +385,13 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "2.2.1"
+version = "2.2.2"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "urllib3-2.2.1-py3-none-any.whl", hash = "sha256:450b20ec296a467077128bff42b73080516e71b56ff59a60a02bef2232c4fa9d"},
-    {file = "urllib3-2.2.1.tar.gz", hash = "sha256:d0570876c61ab9e520d776c38acbbb5b05a776d3f9ff98a5c8fd5162a444cf19"},
+    {file = "urllib3-2.2.2-py3-none-any.whl", hash = "sha256:a448b2f64d686155468037e1ace9f2d2199776e17f0a46610480d311f73e3472"},
+    {file = "urllib3-2.2.2.tar.gz", hash = "sha256:dd505485549a7a552833da5e6063639d0d177c04f23bc3864e41e5dc5f612168"},
 ]
 
 [package.extras]
