@@ -23,11 +23,11 @@ logger = logging.getLogger(__name__)
 
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     def __init__(self, *args, **kwargs):
+        logger.info('Init')
         super().__init__(*args, **kwargs)
         (self.ontoFormat, self.ontoVersion, self.restrictedAccess,
          self.httpsInterception, self.disableRemovingRedirects, 
          self.forward_headers, self.timestamp, self.manifest) = config
-        logger.info()
 
     def before_upstream_connection(self, request: HttpParser):
         logger.info('Before upstream connection hook')
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     config = parse_arguments()
 
-    sys.argv = [sys.argv[0]] # TODO: fix this
+    sys.argv = [sys.argv[0]]
 
     # check it https interception is enabled
     if config[3] != 'none':
