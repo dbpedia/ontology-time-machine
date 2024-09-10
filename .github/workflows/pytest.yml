@@ -29,6 +29,9 @@ jobs:
         echo "$CA_CERT" > ca-cert.pem
         echo "$CA_KEY" > ca-key.pem
         echo "$CA_SIGNING_KEY" > ca-signing-key.pem
+    - name: Start poetry venv
+      run: |
+        poetry shell
     - name: Start the proxy
       run: |
         python3 ontologytimemachine/custom_proxy.py &    
