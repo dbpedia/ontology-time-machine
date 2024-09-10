@@ -16,25 +16,35 @@ PROXIES = {
 CA_CERT_PATH = "ca-cert.pem"
 
 
-@pytest.fixture(scope="module", autouse=True)
-def start_proxy_server():
-    # Start the proxy server in a subprocess
-    process = subprocess.Popen(
-        [
-            'python3', 'ontologytimemachine/custom_proxy.py', 
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+# @pytest.fixture(scope="module", autouse=True)
+# def start_proxy_server():
+#     # Start the proxy server in a subprocess
+#     process = subprocess.Popen(
+#         [
+#             'python3', 'ontologytimemachine/custom_proxy.py', 
+#         ],
+#         stdout=subprocess.PIPE,
+#         stderr=subprocess.PIPE
+#     )
     
-    # Wait a bit to ensure the server starts
-    time.sleep(5)
+#     # Wait a bit to ensure the server starts
+#     time.sleep(5)
     
-    yield
-    "http://0.0.0.0:8899"
-    # Terminate the proxy server after tests
-    process.terminate()
-    process.wait()
+#     yield
+#     "http://0.0.0.0:8899"
+#     # Terminate the proxy server after tests
+#     process.terminate()
+#     process.wait()
+
+
+def test_12_data_globalchange():
+    iri = 'http://data.globalchange.gov/gcis.owl'
+    generic_test(iri, 'text/turtle')
+
+
+def test_13_data_ontotext():
+    iri = 'http://data.ontotext.com/resource/leak/'
+    generic_test(iri, 'text/turtle')
 
 
 def test_1_babelnet():
@@ -88,16 +98,6 @@ def test_10_data_bigdatagrapes():
 
 def test_11_data_europa_esco():
     iri = 'http://data.europa.eu/esco/flow'
-    generic_test(iri, 'text/turtle')
-
-
-def test_12_data_globalchange():
-    iri = 'http://data.globalchange.gov/gcis.owl'
-    generic_test(iri, 'text/turtle')
-
-
-def test_13_data_ontotext():
-    iri = 'http://data.ontotext.com/resource/leak/'
     generic_test(iri, 'text/turtle')
 
 
