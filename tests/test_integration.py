@@ -37,77 +37,76 @@ def start_proxy_server():
     process.wait()
 
 
-# def test_babelnet():
-#     iri = 'http://babelnet.org/rdf/'
-#     generic_test(iri, 'text/turtle')
+def test_1_babelnet():
+    iri = 'http://babelnet.org/rdf/'
+    generic_test(iri, 'text/turtle')
+
+def test_2_bag_basisregistraties():
+    iri = 'http://bag.basisregistraties.overheid.nl/def/bag'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_bag_basisregistraties():
-#     iri = 'http://bag.basisregistraties.overheid.nl/def/bag'
-#     generic_test(iri, 'text/turtle')
+def test_3_bblfish():
+    iri = 'http://bblfish.net/work/atom-owl/2006-06-06/'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_bblfish():
-#     iri = 'http://bblfish.net/work/atom-owl/2006-06-06/'
-#     generic_test(iri, 'text/turtle')
+def test_4_brk_basisregistraties():
+    iri = 'http://brk.basisregistraties.overheid.nl/def/brk'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_brk_basisregistraties():
-#     iri = 'http://brk.basisregistraties.overheid.nl/def/brk'
-#     generic_test(iri, 'text/turtle')
+def test_5_brt_basisregistraties():
+    iri = 'http://brt.basisregistraties.overheid.nl/def/top10nl'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_brt_basisregistraties():
-#     iri = 'http://brt.basisregistraties.overheid.nl/def/top10nl'
-#     generic_test(iri, 'text/turtle')
+def test_6_brt_basisregistraties_begrippenkader():
+    iri = 'http://brt.basisregistraties.overheid.nl/id/begrippenkader/top10nl'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_brt_basisregistraties_begrippenkader():
-#     iri = 'http://brt.basisregistraties.overheid.nl/id/begrippenkader/top10nl'
-#     generic_test(iri, 'text/turtle')
+def test_7_buzzword():
+    iri = 'http://buzzword.org.uk/rdf/personal-link-types#'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_buzzword():
-#     iri = 'http://buzzword.org.uk/rdf/personal-link-types#'
-#     generic_test(iri, 'text/turtle')
+def test_8_catalogus_professorum():
+    iri = 'http://catalogus-professorum.org/cpm/2/'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_catalogus_professorum():
-#     iri = 'http://catalogus-professorum.org/cpm/2/'
-#     generic_test(iri, 'text/turtle')
+def test_9_data_gov():
+    iri = 'http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_data_gov():
-#     iri = 'http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf'
-#     generic_test(iri, 'text/turtle')
+def test_10_data_bigdatagrapes():
+    iri = 'http://data.bigdatagrapes.eu/resource/ontology/'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_data_bigdatagrapes():
-#     iri = 'http://data.bigdatagrapes.eu/resource/ontology/'
-#     generic_test(iri, 'text/turtle')
+def test_11_data_europa_esco():
+    iri = 'http://data.europa.eu/esco/flow'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_data_europa_esco():
-#     iri = 'http://data.europa.eu/esco/flow'
-#     generic_test(iri, 'text/turtle')
+def test_12_data_globalchange():
+    iri = 'http://data.globalchange.gov/gcis.owl'
+    generic_test(iri, 'text/turtle')
 
 
-# def test_data_globalchange():
-#     iri = 'http://data.globalchange.gov/gcis.owl'
-#     generic_test(iri, 'text/turtle')
-
-
-def test_data_ontotext():
+def test_13_data_ontotext():
     iri = 'http://data.ontotext.com/resource/leak/'
     generic_test(iri, 'text/turtle')
 
 
-# def test_data_ordnancesurvey_50kGazetteer():
-#     iri = 'http://dbpedia.org/ontology/Person'
-#     generic_test(iri, 'text/turtle')
+def test_14_data_ordnancesurvey_50kGazetteer():
+    iri = 'http://dbpedia.org/ontology/Person'
+    generic_test(iri, 'text/turtle')
 
 
-def test_linked_web_apis():
+def test_15_linked_web_apis():
     iri = 'http://linked-web-apis.fit.cvut.cz/ns/core'
     generic_test(iri, 'text/turtle')
 
