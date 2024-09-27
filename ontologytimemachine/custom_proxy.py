@@ -4,8 +4,8 @@ from proxy.common.utils import build_http_response
 from ontologytimemachine.utils.utils import parse_arguments
 from ontologytimemachine.utils.mock_responses import mock_response_403
 from ontologytimemachine.proxy_wrapper import HttpRequestWrapper
-from ontologytimemachine.utils.proxy_logic import proxy_logic, is_ontology_request_only_ontology
-from ontologytimemachine.utils.proxy_logic import is_archivo_ontology_request
+from ontologytimemachine.utils.proxy_logic import proxy_logic, is_archivo_ontology_request
+from ontologytimemachine.utils.proxy_logic import do_deny_request_due_non_archivo_ontology_uri
 from ontologytimemachine.utils.proxy_logic import if_intercept_host
 from http.client import responses
 import proxy
@@ -46,7 +46,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 return None
 
         # If only ontology mode, return None in all other cases
-        if is_ontology_request_only_ontology(wrapped_request, self.restrictedAccess):
+        if do_deny_request_due_non_archivo_ontology_uri(wrapped_request, self.restrictedAccess):
             logger.warning('Request denied: not an ontology request and only ontologies mode is enabled')
             self.queue_response(mock_response_403)
             return None
@@ -56,6 +56,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             response = proxy_logic(wrapped_request, self.ontoFormat, self.ontoVersion, self.disableRemovingRedirects, self.timestamp, self.manifest)
             self.queue_response(response)
             return None
+
         return request
 
     def handle_client_request(self, request: HttpParser):
@@ -66,8 +67,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         if wrapped_request.is_connect_request():
             return request
 
-        is_ontology_request = is_archivo_ontology_request(wrapped_request)
-        if not is_ontology_request:
+        if not do_deny_request_due_non_archivo_ontology_uri(wrapped_request):
             logger.info('The requested IRI is not part of DBpedia Archivo')
             return request   
 

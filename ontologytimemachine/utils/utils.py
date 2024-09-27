@@ -41,7 +41,7 @@ def parse_arguments():
                         help='Enable/disable mode to only proxy requests to ontologies stored in Archivo.')
 
     # Enable HTTPS interception for specific domains
-    parser.add_argument('--httpsInterception', type=str, choices=['none', 'all'],
+    parser.add_argument('--httpsInterception', type=str, choices=['none', 'all', 'block'],
                         default='all', help='Enable HTTPS interception for specific domains: none, archivo, all, listfilename.')
 
     # Enable/disable inspecting or removing redirects

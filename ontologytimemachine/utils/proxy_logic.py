@@ -2,16 +2,19 @@ import logging
 import requests
 import rdflib
 from urllib.parse import urlparse
-
 from ontologytimemachine.utils.utils import set_onto_format_headers, get_format_from_accept_header
 from ontologytimemachine.utils.utils import parse_accept_header_with_priority
 from ontologytimemachine.utils.utils import dbpedia_api, passthrough_status_codes
 from ontologytimemachine.utils.mock_responses import mock_response_500
 from ontologytimemachine.utils.mock_responses import mock_response_404
+from typing import Set, Tuple
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+
+ARCHIVO_PARSED_URLS: Set[Tuple[str, str]] = set()
 
 
 def if_intercept_host(https_intercept):
@@ -20,24 +23,38 @@ def if_intercept_host(https_intercept):
     return False
 
 
-def is_ontology_request_only_ontology(wrapped_request, only_ontologies):
-    is_archivo_ontology = is_archivo_ontology_request(wrapped_request)
-    if only_ontologies and not is_archivo_ontology:
-        return True
+def do_deny_request_due_non_archivo_ontology_uri (wrapped_request, only_ontologies):
+    if only_ontologies:
+        is_archivo_ontology = is_archivo_ontology_request(wrapped_request)
+        if not is_archivo_ontology:
+            return True
     return False 
 
 
-def is_archivo_ontology_request(wrapped_request):
-    logger.info('Chekc if the requested ontology is in archivo')
-    with open('ontologytimemachine/utils/archivo_ontologies.txt', 'r') as file:
-        urls = [line.strip() for line in file]
-    parsed_urls = [(urlparse(url).netloc, urlparse(url).path) for url in urls]
+def load_archivo_urls() -> None:
+    """Load the archivo URLs into the global variable if not already loaded."""
+    global ARCHIVO_PARSED_URLS
+    if not ARCHIVO_PARSED_URLS:  # Load only if the set is empty
+        logger.info('Loading archivo ontologies from file')
+        with open('ontologytimemachine/utils/archivo_ontologies.txt', 'r') as file:
+            ARCHIVO_PARSED_URLS = {
+                (urlparse(line.strip()).netloc, urlparse(line.strip()).path) for line in file
+            }
 
-    _, request_host, request_path = wrapped_request.get_ontology_from_request()
-    for host, path in parsed_urls:
-        if request_host == host and request_path.startswith(path):
-            return True
-    return False
+
+def is_archivo_ontology_request(wrapped_request) -> bool:
+    """Check if the requested ontology is in the archivo."""
+    logger.info('Check if the requested ontology is in archivo')
+
+    # Ensure the archivo URLs are loaded
+    load_archivo_urls()
+
+    # Extract the request's host and path
+    request_host = wrapped_request.get_request().host.decode('utf-8')
+    request_path = wrapped_request.get_request().path.decode('utf-8')
+
+    # Check if the (host, path) tuple exists in ARCHIVO_PARSED_URLS
+    return (request_host, request_path) in ARCHIVO_PARSED_URLS
 
 
 def request_ontology(url, headers, disableRemovingRedirects=False, timeout=5):
@@ -57,7 +74,7 @@ def proxy_logic(wrapped_request, ontoFormat, ontoVersion, disableRemovingRedirec
     set_onto_format_headers(wrapped_request, ontoFormat, ontoVersion)
 
     headers = wrapped_request.get_request_headers()
-    ontology, _, _ = wrapped_request.get_ontology_from_request()
+    ontology, _, _ = wrapped_request.get_ontology_iri_host_path_from_request()
 
     # if the requested format is not in Archivo and the ontoVersion is not original
     # we can stop because the archivo request will not go through

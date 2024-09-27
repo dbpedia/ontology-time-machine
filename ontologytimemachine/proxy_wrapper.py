@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
 from proxy.http.parser import HttpParser
 import logging
+from typing import Tuple, Dict, Any
 
-
+# Configure logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
 class AbstractRequestWrapper(ABC):
-    def __init__(self, request):
+    def __init__(self, request: Any) -> None:
         self.request = request
 
     @abstractmethod
@@ -28,74 +29,71 @@ class AbstractRequestWrapper(ABC):
         pass
 
     @abstractmethod
-    def get_request(self):
+    def get_request(self) -> Any:
         pass
 
     @abstractmethod
-    def get_request_headers(self):
+    def get_request_headers(self) -> Dict[str, str]:
         pass
 
     @abstractmethod
-    def get_request_accept_header(self):
+    def get_request_accept_header(self) -> str:
         pass
 
     @abstractmethod
-    def set_request_accept_header(self, mime_type):
+    def set_request_accept_header(self, mime_type: str) -> None:
         pass
 
     @abstractmethod
-    def get_ontology_from_request(self):
+    def get_ontology_iri_host_path_from_request(self) -> Tuple[str, str, str]:
         pass
 
 
 class HttpRequestWrapper(AbstractRequestWrapper):
-    def __init__(self, request: HttpParser):
+    def __init__(self, request: HttpParser) -> None:
         super().__init__(request)
 
     def is_get_request(self) -> bool:
         return self.request.method == b'GET'
 
-    def is_connect_request(self):
+    def is_connect_request(self) -> bool:
         return self.request.method == b'CONNECT'
 
-    def is_head_request(self):
+    def is_head_request(self) -> bool:
         return self.request.method == b'HEAD'
 
-    def is_https_request(self):
+    def is_https_request(self) -> bool:
         return self.request.method == b'CONNECT' or self.request.headers.get(b'Host', b'').startswith(b'https')
 
-    def get_request(self):
+    def get_request(self) -> HttpParser:
         return self.request
 
-    def get_request_headers(self):
-        headers = {}
+    def get_request_headers(self) -> Dict[str, str]:
+        headers: Dict[str, str] = {}
         for k, v in self.request.headers.items():
             headers[v[0].decode('utf-8')] = v[1].decode('utf-8')
         return headers
 
-    def get_request_accept_header(self):
+    def get_request_accept_header(self) -> str:
         logger.info('Wrapper - get_request_accept_header')
         return self.request.headers[b'accept'][1].decode('utf-8')
     
-    def set_request_accept_header(self, mime_type):
+    def set_request_accept_header(self, mime_type: str) -> None:
         self.request.headers[b'accept'] = (b'Accept', mime_type.encode('utf-8'))
         logger.info(f'Accept header set to: {self.request.headers[b"accept"][1]}')
     
-    def get_ontology_from_request(self):
+    def get_ontology_iri_host_path_from_request(self) -> Tuple[str, str, str]:
         logger.info('Get ontology from request')
-        print(f'Request protocol: {self.request.protocol}')
-        print(f'Request host: {self.request.host}')
-        print(f'Request _url: {self.request._url}')
-        print(f'Request path: {self.request.path}')
-        if (self.request.method == b'GET' or self.request.method == b'HEAD') and not self.request.host:
+        if (self.request.method in {b'GET', b'HEAD'}) and not self.request.host:
             for k, v in self.request.headers.items():
                 if v[0].decode('utf-8') == 'Host':
                     host = v[1].decode('utf-8')
                     path = self.request.path.decode('utf-8')
-            ontology = 'https://' + host + path
+            ontology = f'https://{host}{path}'
         else:
             host = self.request.host.decode('utf-8')
             path = self.request.path.decode('utf-8')
             ontology = str(self.request._url)
+
         logger.info(f'Ontology: {ontology}')
         return ontology, host, path
