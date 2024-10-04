@@ -45,7 +45,7 @@ class AbstractRequestWrapper(ABC):
         pass
 
     @abstractmethod
-    def get_ontology_iri_host_path_from_request(self) -> Tuple[str, str, str]:
+    def get_request_url_host_path(self) -> Tuple[str, str, str]:
         pass
 
 
@@ -82,18 +82,18 @@ class HttpRequestWrapper(AbstractRequestWrapper):
         self.request.headers[b'accept'] = (b'Accept', mime_type.encode('utf-8'))
         logger.info(f'Accept header set to: {self.request.headers[b"accept"][1]}')
     
-    def get_ontology_iri_host_path_from_request(self) -> Tuple[str, str, str]:
+    def get_request_url_host_path(self) -> Tuple[str, str, str]:
         logger.info('Get ontology from request')
         if (self.request.method in {b'GET', b'HEAD'}) and not self.request.host:
             for k, v in self.request.headers.items():
                 if v[0].decode('utf-8') == 'Host':
                     host = v[1].decode('utf-8')
                     path = self.request.path.decode('utf-8')
-            ontology = f'https://{host}{path}'
+            url = f'https://{host}{path}'
         else:
             host = self.request.host.decode('utf-8')
             path = self.request.path.decode('utf-8')
-            ontology = str(self.request._url)
+            url = str(self.request._url)
 
-        logger.info(f'Ontology: {ontology}')
-        return ontology, host, path
+        logger.info(f'Ontology: {url}')
+        return url, host, path

@@ -74,7 +74,7 @@ def proxy_logic(wrapped_request, ontoFormat, ontoVersion, disableRemovingRedirec
     set_onto_format_headers(wrapped_request, ontoFormat, ontoVersion)
 
     headers = wrapped_request.get_request_headers()
-    ontology, _, _ = wrapped_request.get_ontology_iri_host_path_from_request()
+    ontology, _, _ = wrapped_request.get_request_url_host_path()
 
     # if the requested format is not in Archivo and the ontoVersion is not original
     # we can stop because the archivo request will not go through
