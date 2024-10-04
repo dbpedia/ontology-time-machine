@@ -86,7 +86,19 @@ def parse_arguments():
     logger.info(f'HTTPS Interception: {args.httpsInterception}')
     logger.info(f'Inspect Redirects: {args.disableRemovingRedirects}')
     logger.info(f'Forward Headers: {args.forwardHeaders}')
-    return ontoFormat, args.ontoVersion, args.restrictedAccess, args.httpsInterception, args.disableRemovingRedirects, args.forwardHeaders, timestamp, manifest
+    
+    config = {
+        "ontoFormat": ontoFormat, 
+        "ontoVersion": args.ontoVersion, 
+        "restrictedAccess": args.restrictedAccess, 
+        "httpsInterception": args.httpsInterception, 
+        "disableRemovingRedirects": args.disableRemovingRedirects, 
+        "forward_headers": args.forwardHeaders, 
+        "timestamp": timestamp, 
+        "manifest": manifest,
+    }
+    
+    return  config
 
 
 def get_mime_type(format='turtle'):

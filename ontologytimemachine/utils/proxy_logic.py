@@ -6,7 +6,7 @@ from ontologytimemachine.utils.utils import set_onto_format_headers, get_format_
 from ontologytimemachine.utils.utils import parse_accept_header_with_priority
 from ontologytimemachine.utils.utils import dbpedia_api, passthrough_status_codes
 from ontologytimemachine.utils.mock_responses import mock_response_500
-from ontologytimemachine.utils.mock_responses import mock_response_404
+from ontologytimemachine.utils.mock_responses import mock_response_404, mock_response_403
 from typing import Set, Tuple
 
 
@@ -18,13 +18,17 @@ ARCHIVO_PARSED_URLS: Set[Tuple[str, str]] = set()
 
 
 def if_intercept_host(https_intercept):
-    if https_intercept in ['all']:
+    print(https_intercept)
+    if https_intercept in ['none', 'all']:
         return True
+    elif https_intercept in ['block']:
+        return False
     return False
 
 
 def do_deny_request_due_non_archivo_ontology_uri (wrapped_request, only_ontologies):
     if only_ontologies:
+        print(only_ontologies)
         is_archivo_ontology = is_archivo_ontology_request(wrapped_request)
         if not is_archivo_ontology:
             return True
@@ -34,12 +38,29 @@ def do_deny_request_due_non_archivo_ontology_uri (wrapped_request, only_ontologi
 def load_archivo_urls() -> None:
     """Load the archivo URLs into the global variable if not already loaded."""
     global ARCHIVO_PARSED_URLS
+    print(ARCHIVO_PARSED_URLS)
     if not ARCHIVO_PARSED_URLS:  # Load only if the set is empty
         logger.info('Loading archivo ontologies from file')
         with open('ontologytimemachine/utils/archivo_ontologies.txt', 'r') as file:
             ARCHIVO_PARSED_URLS = {
                 (urlparse(line.strip()).netloc, urlparse(line.strip()).path) for line in file
             }
+
+
+def get_response_from_request(wrapped_request, config):
+    if do_deny_request_due_non_archivo_ontology_uri(wrapped_request, config["restrictedAccess"]):
+        logger.warning('Request denied: not an ontology request and only ontologies mode is enabled')
+        return mock_response_403
+    
+    if is_archivo_ontology_request(wrapped_request):
+        logger.debug('The request is for an ontology')
+        response = proxy_logic(wrapped_request, 
+                               config["ontoFormat"], 
+                               config["ontoVersion"], 
+                               config["disableRemovingRedirects"], 
+                               config["timestamp"], 
+                               config["manifest"])
+        return response
 
 
 def is_archivo_ontology_request(wrapped_request) -> bool:
@@ -52,6 +73,8 @@ def is_archivo_ontology_request(wrapped_request) -> bool:
     # Extract the request's host and path
     request_host = wrapped_request.get_request().host.decode('utf-8')
     request_path = wrapped_request.get_request().path.decode('utf-8')
+    
+    print((request_host, request_path) in ARCHIVO_PARSED_URLS)
 
     # Check if the (host, path) tuple exists in ARCHIVO_PARSED_URLS
     return (request_host, request_path) in ARCHIVO_PARSED_URLS

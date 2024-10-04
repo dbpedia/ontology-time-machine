@@ -16,7 +16,7 @@ import logging
 IP = '0.0.0.0'
 PORT = '8899'
 
-config = ({'format': 'turtle', 'precedence': 'enforcedPriority', 'patchAcceptUpstream': False}, 'originalFailoverLiveLatest', False, 'all', False, True, None, None)
+config = None
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -25,9 +25,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     def __init__(self, *args, **kwargs):
         logger.info('Init')
         super().__init__(*args, **kwargs)
-        (self.ontoFormat, self.ontoVersion, self.restrictedAccess,
-         self.httpsInterception, self.disableRemovingRedirects, 
-         self.forward_headers, self.timestamp, self.manifest) = config
+        self.config = config
 
     def before_upstream_connection(self, request: HttpParser):
         logger.info('Before upstream connection hook')
@@ -35,29 +33,22 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         wrapped_request = HttpRequestWrapper(request)
 
         if wrapped_request.is_connect_request():
-            logger.info(f'HTTPS interception mode: {self.httpsInterception}')
+            logger.info(f'HTTPS interception mode: {self.config["httpsInterception"]}')
             # Only intercept if interception is enabled
             # Move this to the utils
-            if if_intercept_host(self.httpsInterception):
+            if if_intercept_host(self.config["httpsInterception"]):
                 logger.info('HTTPS interception is on, forwardig the request')
                 return request
             else:
                 logger.info('HTTPS interception is turned off')
                 return None
 
-        # If only ontology mode, return None in all other cases
-        if do_deny_request_due_non_archivo_ontology_uri(wrapped_request, self.restrictedAccess):
-            logger.warning('Request denied: not an ontology request and only ontologies mode is enabled')
-            self.queue_response(mock_response_403)
-            return None
-        
-        if is_archivo_ontology_request(wrapped_request):
-            logger.debug('The request is for an ontology')
-            response = proxy_logic(wrapped_request, self.ontoFormat, self.ontoVersion, self.disableRemovingRedirects, self.timestamp, self.manifest)
-            self.queue_response(response)
-            return None
-
-        return request
+        # # If only ontology mode, return None in all other cases
+        # response = get_response_from_request(wrapped_request, config)
+        # if response:
+        #     self.queue_response(mock_response_403)
+        #     return None
+        # return request
 
     def handle_client_request(self, request: HttpParser):
         logger.info('Handle client request hook')
@@ -65,17 +56,23 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
         wrapped_request = HttpRequestWrapper(request)
         if wrapped_request.is_connect_request():
-            return request
+            return request 
 
-        if not do_deny_request_due_non_archivo_ontology_uri(wrapped_request):
+        if do_deny_request_due_non_archivo_ontology_uri(wrapped_request, config["restrictedAccess"]):
             logger.info('The requested IRI is not part of DBpedia Archivo')
-            return request   
+            return request 
 
-        response = proxy_logic(wrapped_request, self.ontoFormat, self.ontoVersion, self.disableRemovingRedirects, self.timestamp, self.manifest)
+        print("proxy logic")
+        response = proxy_logic(wrapped_request, 
+                               config["ontoFormat"], 
+                               config["ontoVersion"], 
+                               config["disableRemovingRedirects"], 
+                               config["timestamp"], 
+                               config["manifest"])
         self.queue_response(response)
 
         return None
-    
+
     def handle_upstream_chunk(self, chunk: memoryview):
         return chunk
 
@@ -99,7 +96,7 @@ if __name__ == '__main__':
     sys.argv = [sys.argv[0]]
 
     # check it https interception is enabled
-    if config[3] != 'none':
+    if config["httpsInterception"] != 'none':
         sys.argv += [
             '--ca-key-file', 'ca-key.pem',
             '--ca-cert-file', 'ca-cert.pem',
