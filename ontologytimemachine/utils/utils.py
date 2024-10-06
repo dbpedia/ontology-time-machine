@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-dbpedia_api = 'https://archivo.dbpedia.org/download'
+archivo_api = 'https://archivo.dbpedia.org/download'
 archivo_mimetypes = ['application/rdf+xml', 'application/owl+xml', 'text/turtle', 'application/n-triples']
 
 passthrough_status_codes = [
@@ -16,89 +16,6 @@ passthrough_status_codes = [
     300, 301, 302, 303, 304, 307, 308,
     451,
 ]
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='Process ontology format and version.')
-
-    # Defining ontoFormat argument with nested options
-    parser.add_argument('--ontoFormat', type=str, choices=['turtle', 'ntriples', 'rdfxml', 'htmldocu'],
-                        default='turtle', help='Format of the ontology: turtle, ntriples, rdfxml, htmldocu')
-
-    parser.add_argument('--ontoPrecedence', type=str, choices=['default', 'enforcedPriority', 'always'],
-                        default='enforcedPriority', help='Precedence of the ontology: default, enforcedPriority, always')
-
-    parser.add_argument('--patchAcceptUpstream', type=bool, default=False,
-                        help='Defines if the Accept Header is patched upstream in original mode.')
-
-    # Defining ontoVersion argument
-    parser.add_argument('--ontoVersion', type=str, choices=['original', 'originalFailoverLiveLatest', 
-                                                            'latestArchived', 'timestampArchived', 'dependencyManifest'],
-                        default='originalFailoverLiveLatest', help='Version of the ontology: original, originalFailoverLive, originalFailoverArchivoMonitor, latestArchive, timestampArchive, dependencyManifest')
-
-    # Enable/disable mode to only proxy requests to ontologies
-    parser.add_argument('--restrictedAccess', type=bool, default=False,
-                        help='Enable/disable mode to only proxy requests to ontologies stored in Archivo.')
-
-    # Enable HTTPS interception for specific domains
-    parser.add_argument('--httpsInterception', type=str, choices=['none', 'all', 'block'],
-                        default='all', help='Enable HTTPS interception for specific domains: none, archivo, all, listfilename.')
-
-    # Enable/disable inspecting or removing redirects
-    parser.add_argument('--disableRemovingRedirects', type=bool, default=False,
-                        help='Enable/disable inspecting or removing redirects.')
-
-    # Enable/disable proxy forward headers
-    parser.add_argument('--forwardHeaders', type=bool, default=True,
-                        help='Enable/disable proxy forward headers.')
-
-    args  = parser.parse_args()
-
-    # Check the value of --ontoVersion and prompt for additional arguments if needed
-    if args.ontoVersion == 'timestampArchived':
-        args.timestamp = input('Please provide the timestamp (e.g., YYYY-MM-DD): ')
-    elif args.ontoVersion == 'dependencyManifest':
-        args.manifest = input('Please provide the manifest file path: ')
-    
-    # Accessing the arguments
-    logger.info(f"Selected Ontology Version: {args.ontoVersion}")
-    if hasattr(args, 'timestamp'):
-        logger.info(f"Timestamp: {args.timestamp}")
-        timestamp = args.timestamp
-    else:
-        timestamp = None
-
-    if hasattr(args, 'manifest'):
-        logger.info(f"Manifest File Path: {args.manifest}")
-        manifest = args.manifest
-    else:
-        manifest = None
-
-    ontoFormat = {
-        'format': args.ontoFormat,
-        'precedence': args.ontoPrecedence,
-        'patchAcceptUpstream': args.patchAcceptUpstream
-    }
-
-    logger.info(f'Ontology Format: {ontoFormat}')
-    logger.info(f'Ontology Version: {args.ontoVersion}')
-    logger.info(f'Only Ontologies Mode: {args.restrictedAccess}')
-    logger.info(f'HTTPS Interception: {args.httpsInterception}')
-    logger.info(f'Inspect Redirects: {args.disableRemovingRedirects}')
-    logger.info(f'Forward Headers: {args.forwardHeaders}')
-    
-    config = {
-        "ontoFormat": ontoFormat, 
-        "ontoVersion": args.ontoVersion, 
-        "restrictedAccess": args.restrictedAccess, 
-        "httpsInterception": args.httpsInterception, 
-        "disableRemovingRedirects": args.disableRemovingRedirects, 
-        "forward_headers": args.forwardHeaders, 
-        "timestamp": timestamp, 
-        "manifest": manifest,
-    }
-    
-    return  config
 
 
 def get_mime_type(format='turtle'):
@@ -112,6 +29,18 @@ def get_mime_type(format='turtle'):
     
     # Return the MIME type based on the format or use a generic default
     return format_to_mime.get(format, 'text/turtle')
+
+
+def map_mime_to_format(mime_type):
+    # Map file extensions to formats
+    mime_to_format = {
+        'application/rdf+xml': 'owl',       # Common MIME type for OWL files
+        'application/owl+xml': 'owl',       # Specific MIME type for OWL
+        'text/turtle': 'ttl',               # MIME type for Turtle format
+        'application/n-triples': 'nt',      # MIME type for N-Triples format
+    }
+    
+    return mime_to_format.get(mime_type, None)
 
 
 def set_onto_format_headers(wrapped_request, ontoFormat, ontoVersion):
@@ -157,18 +86,6 @@ def select_highest_priority_mime_from_archivo(mime_list):
 
     # If none of the preferred MIME types are present, return nothing
     return None
-
-
-def map_mime_to_format(mime_type):
-    # Map file extensions to formats
-    mime_to_format = {
-        'application/rdf+xml': 'owl',       # Common MIME type for OWL files
-        'application/owl+xml': 'owl',       # Specific MIME type for OWL
-        'text/turtle': 'ttl',               # MIME type for Turtle format
-        'application/n-triples': 'nt',      # MIME type for N-Triples format
-    }
-    
-    return mime_to_format.get(mime_type, None)
 
 
 def parse_accept_header_with_priority(accept_header):
