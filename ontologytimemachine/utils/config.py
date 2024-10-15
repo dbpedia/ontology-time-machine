@@ -43,9 +43,9 @@ class HttpsInterception(Enum):
 class Config:
     logLevel: LogLevel = LogLevel.INFO
     ontoFormat: Dict[str, Any] = None
-    ontoVersion: str = ""
+    ontoVersion: OntoVersion = (OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST,)
     restrictedAccess: bool = False
-    httpsInterception: str = False
+    httpsInterception: HttpsInterception = (HttpsInterception.ARCHIVO,)
     disableRemovingRedirects: bool = False
     timestamp: str = ""
     # manifest: Dict[str, Any] = None
