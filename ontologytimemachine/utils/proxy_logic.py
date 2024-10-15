@@ -1,17 +1,19 @@
 import logging
 import requests
-import rdflib
-from urllib.parse import urlparse
 from ontologytimemachine.utils.utils import (
     set_onto_format_headers,
     get_format_from_accept_header,
 )
-from ontologytimemachine.utils.utils import parse_accept_header_with_priority
-from ontologytimemachine.utils.utils import archivo_api, passthrough_status_codes
-from ontologytimemachine.utils.mock_responses import mock_response_500
+from ontologytimemachine.utils.download_archivo_urls import load_archivo_urls
+from ontologytimemachine.utils.utils import (
+    parse_accept_header_with_priority,
+    archivo_api,
+    passthrough_status_codes,
+)
 from ontologytimemachine.utils.mock_responses import (
-    mock_response_404,
     mock_response_403,
+    mock_response_404,
+    mock_response_500,
 )
 from typing import Set, Tuple
 
@@ -22,14 +24,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-ARCHIVO_PARSED_URLS: Set[Tuple[str, str]] = set()
-
-
-def if_intercept_host(https_intercept):
-    print(https_intercept)
-    if https_intercept in ["none", "all"]:
+def if_intercept_host(config):
+    if config.httpsInterception in ["none", "all"]:
         return True
-    elif https_intercept in ["block"]:
+    elif config.httpsInterception in ["block"]:
         return False
     return False
 
@@ -43,19 +41,6 @@ def do_deny_request_due_non_archivo_ontology_uri(wrapped_request, only_ontologie
     return False
 
 
-def load_archivo_urls():
-    """Load the archivo URLs into the global variable if not already loaded."""
-    global ARCHIVO_PARSED_URLS
-    print(ARCHIVO_PARSED_URLS)
-    if not ARCHIVO_PARSED_URLS:  # Load only if the set is empty
-        logger.info("Loading archivo ontologies from file")
-        with open("ontologytimemachine/utils/archivo_ontologies.txt", "r") as file:
-            ARCHIVO_PARSED_URLS = {
-                (urlparse(line.strip()).netloc, urlparse(line.strip()).path)
-                for line in file
-            }
-
-
 def get_response_from_request(wrapped_request, config):
     do_deny = do_deny_request_due_non_archivo_ontology_uri(
         wrapped_request, config.restrictedAccess
@@ -66,13 +51,7 @@ def get_response_from_request(wrapped_request, config):
         )
         return mock_response_403
 
-    response = proxy_logic(
-        wrapped_request,
-        config.ontoFormat,
-        config.ontoVersion,
-        config.disableRemovingRedirects,
-        config.timestamp,
-    )
+    response = proxy_logic(wrapped_request, config)
     return response
 
 
@@ -82,15 +61,43 @@ def is_archivo_ontology_request(wrapped_request):
 
     # Ensure the archivo URLs are loaded
     load_archivo_urls()
+    from ontologytimemachine.utils.download_archivo_urls import ARCHIVO_PARSED_URLS
 
     # Extract the request's host and path
-    request_host = wrapped_request.get_request().host.decode("utf-8")
-    request_path = wrapped_request.get_request().path.decode("utf-8")
+    request_host = wrapped_request.get_request_host()
+    request_path = wrapped_request.get_request_path()
 
-    print((request_host, request_path) in ARCHIVO_PARSED_URLS)
+    print(f"Host: {request_host}")
+    print(f"Path: {request_path}")
+    print((request_host, request_path))
+    print(list(ARCHIVO_PARSED_URLS)[0])
+    if (request_host, request_path) in ARCHIVO_PARSED_URLS:
+        logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
+        return True
 
-    # Check if the (host, path) tuple exists in ARCHIVO_PARSED_URLS
-    return (request_host, request_path) in ARCHIVO_PARSED_URLS
+    # Remove last hash and check again
+    if request_path.endswith("/"):
+        request_path = request_path.rstrip("/")
+    if (request_host, request_path) in ARCHIVO_PARSED_URLS:
+        logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
+        return True
+
+    # Cut the last part of the path
+
+    path_parts = request_path.split("/")
+    new_path = "/".join(path_parts[:-1])
+    print(f"New path: {new_path}")
+    if (request_host, new_path) in ARCHIVO_PARSED_URLS:
+        logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
+        return True
+
+    new_path = "/".join(path_parts[:-2])
+    if (request_host, new_path) in ARCHIVO_PARSED_URLS:
+        logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
+        return True
+
+    logger.info(f"Requested URL: {request_host+request_path} is NOT in Archivo")
+    return False
 
 
 def request_ontology(url, headers, disableRemovingRedirects=False, timeout=5):
@@ -106,12 +113,11 @@ def request_ontology(url, headers, disableRemovingRedirects=False, timeout=5):
         return mock_response_404()
 
 
-def proxy_logic(
-    wrapped_request, ontoFormat, ontoVersion, disableRemovingRedirects, timestamp
-):
+# change the function definition and pass only the config
+def proxy_logic(wrapped_request, config):
     logger.info("Proxy has to intervene")
 
-    set_onto_format_headers(wrapped_request, ontoFormat, ontoVersion)
+    set_onto_format_headers(wrapped_request, config)
 
     headers = wrapped_request.get_request_headers()
     ontology, _, _ = wrapped_request.get_request_url_host_path()
@@ -119,22 +125,20 @@ def proxy_logic(
     # if the requested format is not in Archivo and the ontoVersion is not original
     # we can stop because the archivo request will not go through
     format = get_format_from_accept_header(headers)
-    if not format and ontoVersion != "original":
+    if not format and config.ontoVersion != "original":
         logger.info(f"No format can be used from Archivo")
         return mock_response_500
 
-    if ontoVersion == "original":
-        response = fetch_original(ontology, headers, disableRemovingRedirects)
-    elif ontoVersion == "originalFailoverLiveLatest":
+    if config.ontoVersion == "original":
+        response = fetch_original(ontology, headers, config)
+    elif config.ontoVersion == "originalFailoverLiveLatest":
         response = fetch_failover(
-            wrapped_request, ontology, headers, disableRemovingRedirects
+            wrapped_request, ontology, headers, config.disableRemovingRedirects
         )
-    elif ontoVersion == "latestArchived":
+    elif config.ontoVersion == "latestArchived":
         response = fetch_latest_archived(wrapped_request, ontology, headers)
-    elif ontoVersion == "timestampArchived":
-        response = fetch_timestamp_archived(
-            wrapped_request, ontology, headers, timestamp
-        )
+    elif config.ontoVersion == "timestampArchived":
+        response = fetch_timestamp_archived(wrapped_request, ontology, headers, config)
     # Commenting the manifest related part because it is not supported in the current version
     # elif ontoVersion == 'dependencyManifest':
     #     response = fetch_dependency_manifest(ontology, headers, manifest)
@@ -188,7 +192,7 @@ def fetch_latest_archived(wrapped_request, ontology, headers):
     return request_ontology(dbpedia_url, headers)
 
 
-def fetch_timestamp_archived(wrapped_request, ontology, headers, timestamp):
+def fetch_timestamp_archived(wrapped_request, ontology, headers, config):
     if not is_archivo_ontology_request(wrapped_request):
         logger.info(
             "Data needs to be fetched from Archivo, but ontology is not available on Archivo."
@@ -196,7 +200,7 @@ def fetch_timestamp_archived(wrapped_request, ontology, headers, timestamp):
         return mock_response_404()
     logger.info("Fetch archivo timestamp")
     format = get_format_from_accept_header(headers)
-    dbpedia_url = f"{archivo_api}?o={ontology}&f={format}&v={timestamp}"
+    dbpedia_url = f"{archivo_api}?o={ontology}&f={format}&v={config.timestamp}"
     logger.info(f"Fetching from DBpedia Archivo API: {dbpedia_url}")
     return request_ontology(dbpedia_url, headers)
 
