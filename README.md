@@ -46,4 +46,4 @@ poetry install
 poetry shell
 ```
 
-python3 -m proxy --ca-key-file ca-key.pem --ca-cert-file ca-cert.pem --ca-signing-key-file ca-signing-key.pem --hostname IP --port 8899 --plugins ontologytimemachine.custom_proxy.OntologyTimeMachinePlugin --ontoFormat ntriples --ontoVersion originalFailoverLive --ontoPrecedence enforcedPriority
+python3 ontologytimemachine/custom_proxy.py --ontoFormat ntriples --ontoVersion originalFailoverLiveLatest --ontoPrecedence enforcedPriority
