@@ -45,7 +45,7 @@ class Config:
     ontoFormat: Dict[str, Any] = None
     ontoVersion: OntoVersion = (OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST,)
     restrictedAccess: bool = False
-    httpsInterception: HttpsInterception = (HttpsInterception.ARCHIVO,)
+    httpsInterception: HttpsInterception = (HttpsInterception.ALL,)
     disableRemovingRedirects: bool = False
     timestamp: str = ""
     # manifest: Dict[str, Any] = None

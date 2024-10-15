@@ -62,9 +62,9 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
     def do_intercept(self, _request: HttpParser) -> bool:
         wrapped_request = HttpRequestWrapper(_request)
-        if self.config.httpsInterception in ["all", "none"]:
+        if self.config.httpsInterception in ["all"]:
             return True
-        elif self.config.httpsInterception in ["block"]:
+        elif self.config.httpsInterception in ["none"]:
             return False
         elif self.config.httpsInterception in ["archivo"]:
             if is_archivo_ontology_request(wrapped_request):
