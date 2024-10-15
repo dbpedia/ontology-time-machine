@@ -11,16 +11,55 @@ class LogLevel(Enum):
     ERROR = "error"
 
 
+class OntoFormat(Enum):
+    TURTLE = "turtle"
+    NTRIPLES = "ntriples"
+    RDFXML = "rdfxml"
+    HTMLDOCU = "htmldocu"
+
+
+class OntoPrecedence(Enum):
+    DEFAULT = "default"
+    ENFORCED_PRIORITY = "enforcedPriority"
+    ALWAYS = "always"
+
+
+class OntoVersion(Enum):
+    ORIGINAL = "original"
+    ORIGINAL_FAILOVER_LIVE_LATEST = "originalFailoverLiveLatest"
+    LATEST_ARCHIVED = "latestArchived"
+    TIMESTAMP_ARCHIVED = "timestampArchived"
+    DEPENDENCY_MANIFEST = "dependencyManifest"
+
+
+class HttpsInterception(Enum):
+    NONE = "none"
+    ALL = "all"
+    BLOCK = "block"
+    ARCHIVO = "archivo"
+
+
 @dataclass
 class Config:
     logLevel: LogLevel = LogLevel.INFO
     ontoFormat: Dict[str, Any] = None
     ontoVersion: str = ""
     restrictedAccess: bool = False
-    httpsInterception: bool = False
+    httpsInterception: str = False
     disableRemovingRedirects: bool = False
     timestamp: str = ""
     # manifest: Dict[str, Any] = None
+
+
+def enum_parser(enum_class, value):
+    value_lower = value.lower()
+    try:
+        return next(e.value for e in enum_class if e.value.lower() == value_lower)
+    except StopIteration:
+        valid_options = ", ".join([e.value for e in enum_class])
+        raise ValueError(
+            f"Invalid value '{value}'. Available options are: {valid_options}"
+        )
 
 
 def parse_arguments() -> Config:
@@ -29,17 +68,15 @@ def parse_arguments() -> Config:
     # Defining ontoFormat argument with nested options
     parser.add_argument(
         "--ontoFormat",
-        type=str,
-        choices=["turtle", "ntriples", "rdfxml", "htmldocu"],
-        default="turtle",
+        type=lambda s: enum_parser(OntoFormat, s),
+        default=OntoFormat.TURTLE.value,
         help="Format of the ontology: turtle, ntriples, rdfxml, htmldocu",
     )
 
     parser.add_argument(
         "--ontoPrecedence",
-        type=str,
-        choices=["default", "enforcedPriority", "always"],
-        default="enforcedPriority",
+        type=lambda s: enum_parser(OntoPrecedence, s),
+        default=OntoPrecedence.ENFORCED_PRIORITY.value,
         help="Precedence of the ontology: default, enforcedPriority, always",
     )
 
@@ -53,15 +90,8 @@ def parse_arguments() -> Config:
     # Defining ontoVersion argument
     parser.add_argument(
         "--ontoVersion",
-        type=str,
-        choices=[
-            "original",
-            "originalFailoverLiveLatest",
-            "latestArchived",
-            "timestampArchived",
-            "dependencyManifest",
-        ],
-        default="originalFailoverLiveLatest",
+        type=lambda s: enum_parser(OntoVersion, s),
+        default=OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST.value,
         help="Version of the ontology: original, originalFailoverLive, originalFailoverArchivoMonitor, latestArchive, timestampArchive, dependencyManifest",
     )
 
@@ -76,9 +106,8 @@ def parse_arguments() -> Config:
     # Enable HTTPS interception for specific domains
     parser.add_argument(
         "--httpsInterception",
-        type=str,
-        choices=["none", "all", "block"],
-        default="all",
+        type=lambda s: enum_parser(HttpsInterception, s),
+        default=HttpsInterception.ALL.value,
         help="Enable HTTPS interception for specific domains: none, archivo, all, listfilename.",
     )
 
@@ -93,8 +122,8 @@ def parse_arguments() -> Config:
     # Log level
     parser.add_argument(
         "--logLevel",
-        type=str,
-        default="info",
+        type=lambda s: enum_parser(LogLevel, s),
+        default=LogLevel.INFO.value,
         help="Level of the logging: debug, info, warning, error.",
     )
 
@@ -134,8 +163,7 @@ def parse_arguments() -> Config:
         restrictedAccess=args.restrictedAccess,
         httpsInterception=args.httpsInterception,
         disableRemovingRedirects=args.disableRemovingRedirects,
-        timestamp=timestamp,
-        # manifest=manifest
+        timestamp=args.timestamp if hasattr(args, "timestamp") else "",
     )
 
     return config
