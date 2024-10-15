@@ -31,11 +31,11 @@ class AbstractRequestWrapper(ABC):
         pass
 
     @abstractmethod
-    def get_request_host(self) -> Any:
+    def get_request_host(self) -> str:
         pass
 
     @abstractmethod
-    def get_request_path(self) -> Any:
+    def get_request_path(self) -> str:
         pass
 
     @abstractmethod
@@ -77,7 +77,7 @@ class HttpRequestWrapper(AbstractRequestWrapper):
         return self.request.host.decode("utf-8")
 
     def get_request_path(self) -> str:
-        return self.request.host.decode("utf-8")
+        return self.request.path.decode("utf-8")
 
     def get_request_headers(self) -> Dict[str, str]:
         headers: Dict[str, str] = {}
