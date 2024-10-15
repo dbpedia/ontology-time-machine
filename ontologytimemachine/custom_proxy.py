@@ -3,8 +3,11 @@ from proxy.http.parser import HttpParser
 from proxy.common.utils import build_http_response
 from ontologytimemachine.utils.mock_responses import mock_response_403
 from ontologytimemachine.proxy_wrapper import HttpRequestWrapper
-from ontologytimemachine.utils.proxy_logic import get_response_from_request
-from ontologytimemachine.utils.proxy_logic import if_intercept_host
+from ontologytimemachine.utils.proxy_logic import (
+    get_response_from_request,
+    if_intercept_host,
+    is_archivo_ontology_request,
+)
 from ontologytimemachine.utils.config import Config, parse_arguments
 from http.client import responses
 import proxy
@@ -29,7 +32,8 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         super().__init__(*args, **kwargs)
         self.config = config
 
-    def before_upstream_connection(self, request: HttpParser):
+    def before_upstream_connection(self, request: HttpParser) -> HttpParser | None:
+        print(config)
         logger.info("Before upstream connection hook")
         logger.info(
             f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}"
@@ -40,7 +44,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             logger.info(f"HTTPS interception mode: {self.config.httpsInterception}")
 
             # Only intercept if interception is enabled
-            if if_intercept_host(self.config.httpsInterception):
+            if if_intercept_host(self.config):
                 logger.info("HTTPS interception is on, forwardig the request")
                 return request
             else:
@@ -56,7 +60,23 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
         return request
 
-    def handle_client_request(self, request: HttpParser):
+    def do_intercept(self, _request: HttpParser) -> bool:
+        wrapped_request = HttpRequestWrapper(_request)
+        if self.config.httpsInterception in ["all", "none"]:
+            return True
+        elif self.config.httpsInterception in ["block"]:
+            return False
+        elif self.config.httpsInterception in ["archivo"]:
+            if is_archivo_ontology_request(wrapped_request):
+                return True
+            return False
+        else:
+            logger.info(
+                f"httpsInterception: {self.config.httpsInterception} option is not allowed."
+            )
+            return False
+
+    def handle_client_request(self, request: HttpParser) -> HttpParser:
         logger.info("Handle client request hook")
         logger.info(
             f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}"
