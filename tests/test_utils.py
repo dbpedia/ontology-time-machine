@@ -56,8 +56,6 @@ class TestUtils(unittest.TestCase):
             ("application/xml", 0.9),
             ("*/*", 0.8),
         ]
-        print(parsed_result)
-        print(expected_result)
         self.assertEqual(parsed_result, expected_result)
 
     def test_get_format_from_accept_header(self):

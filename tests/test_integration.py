@@ -120,11 +120,10 @@ def iri_generic_test(iri):
         response = requests.get(iri, proxies=PROXIES, verify=CA_CERT_PATH)
         assert response.status_code == 200
         assert iri in response.content.decode("utf-8")
-        print(f"Test passed for IRI: {iri}")
     except AssertionError:
-        print(f"Test failed for IRI: {iri}")
+        return e
     except requests.exceptions.RequestException as e:
-        print(f"Request failed for IRI: {iri}, Error: {e}")
+        return e
 
 
 def get_parameter_combinations():

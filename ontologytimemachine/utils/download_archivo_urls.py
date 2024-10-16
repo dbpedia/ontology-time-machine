@@ -83,8 +83,7 @@ def download_archivo_urls():
                 csv_reader = csv.reader(csv_file, delimiter=",")
                 with open(ARCHIVO_FILE_PATH, "w") as txt_file:
                     for row in csv_reader:
-                        if row:  # Ensure row is not empty
-                            print(row)
+                        if row:
                             txt_file.write(
                                 row[0].strip() + "\n"
                             )  # Write only the first column (URL) to the text file

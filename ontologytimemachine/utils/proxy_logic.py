@@ -34,7 +34,6 @@ def if_intercept_host(config):
 
 def do_deny_request_due_non_archivo_ontology_uri(wrapped_request, only_ontologies):
     if only_ontologies:
-        print(only_ontologies)
         is_archivo_ontology = is_archivo_ontology_request(wrapped_request)
         if not is_archivo_ontology:
             return True
@@ -66,11 +65,7 @@ def is_archivo_ontology_request(wrapped_request):
     # Extract the request's host and path
     request_host = wrapped_request.get_request_host()
     request_path = wrapped_request.get_request_path()
-
-    print(f"Host: {request_host}")
-    print(f"Path: {request_path}")
-    print((request_host, request_path))
-    print(list(ARCHIVO_PARSED_URLS)[0])
+    
     if (request_host, request_path) in ARCHIVO_PARSED_URLS:
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
         return True
@@ -86,7 +81,7 @@ def is_archivo_ontology_request(wrapped_request):
 
     path_parts = request_path.split("/")
     new_path = "/".join(path_parts[:-1])
-    print(f"New path: {new_path}")
+    
     if (request_host, new_path) in ARCHIVO_PARSED_URLS:
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
         return True
