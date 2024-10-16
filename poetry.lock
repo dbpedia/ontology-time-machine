@@ -137,14 +137,17 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "idna"
-version = "3.8"
+version = "3.10"
 description = "Internationalized Domain Names in Applications (IDNA)"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "idna-3.8-py3-none-any.whl", hash = "sha256:050b4e5baadcd44d760cedbd2b8e639f2ff89bbc7a5730fcc662954303377aac"},
-    {file = "idna-3.8.tar.gz", hash = "sha256:d838c2c0ed6fced7693d5e8ab8e734d5f8fda53a039c0164afb0b82e771e3603"},
+    {file = "idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3"},
+    {file = "idna-3.10.tar.gz", hash = "sha256:12f65c9b470abda6dc35cf8e63cc574b1c52b11df2c86030af0ac09b01b13ea9"},
 ]
+
+[package.extras]
+all = ["flake8 (>=7.1.1)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2)"]
 
 [[package]]
 name = "iniconfig"
@@ -268,13 +271,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "proxy-py"
-version = "2.4.7"
+version = "2.4.8"
 description = "\\u26a1 Fast \\u2022 \\U0001fab6 Lightweight \\u2022 \\U0001f51f Dependency \\u2022 \\U0001f50c Pluggable \\u2022 \\U0001f608 TLS interception \\u2022 \\U0001f512 DNS-over-HTTPS \\u2022 \\U0001f525 Poor Mans VPN \\u2022 \\u23ea Reverse & \\u23e9 Forward \\u2022 \\U0001f46e\\U0001f3ff Proxy Server framework \\u2022 \\U0001f310 Web Server framework \\u2022 \\u27b5 \\u27b6 \\u27b7 \\u27a0 PubSub framework \\u2022 \\U0001f477 Work acceptor & executor framework."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "proxy.py-2.4.7-py3-none-any.whl", hash = "sha256:83ddfda5479403434eace531c2bdef41fd9091df473a4051cd9df1564de056a9"},
-    {file = "proxy_py-2.4.7.tar.gz", hash = "sha256:2e20ad717025cdee92d528be1321b7af8743d941e56de2ae6f390c6dc67aaad1"},
+    {file = "proxy.py-2.4.8-py3-none-any.whl", hash = "sha256:316cbed3184c8ddf4f9b3143f7dc449ef1d44a7c5ca1988276a01444f6426e51"},
+    {file = "proxy_py-2.4.8.tar.gz", hash = "sha256:77088312aa558c9402af2b88d135a1e261af51f5e38242f1d37867559a0a65cb"},
 ]
 
 [package.extras]
@@ -299,13 +302,13 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pytest"
-version = "8.3.2"
+version = "8.3.3"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.3.2-py3-none-any.whl", hash = "sha256:4ba08f9ae7dcf84ded419494d229b48d0903ea6407b030eaec46df5e6a73bba5"},
-    {file = "pytest-8.3.2.tar.gz", hash = "sha256:c132345d12ce551242c87269de812483f5bcc87cdbb4722e48487ba194f9fdce"},
+    {file = "pytest-8.3.3-py3-none-any.whl", hash = "sha256:a6853c7375b2663155079443d2e45de913a911a11d669df02a50814944db57b2"},
+    {file = "pytest-8.3.3.tar.gz", hash = "sha256:70b98107bd648308a7952b06e6ca9a50bc660be218d53c257cc1fc94fda10181"},
 ]
 
 [package.dependencies]
@@ -362,6 +365,20 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "schedule"
+version = "1.2.2"
+description = "Job scheduling for humans."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "schedule-1.2.2-py3-none-any.whl", hash = "sha256:5bef4a2a0183abf44046ae0d164cadcac21b1db011bdd8102e4a0c1e91e06a7d"},
+    {file = "schedule-1.2.2.tar.gz", hash = "sha256:15fe9c75fe5fd9b9627f3f19cc0ef1420508f9f9a46f45cd0769ef75ede5f0b7"},
+]
+
+[package.extras]
+timezone = ["pytz"]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -385,13 +402,13 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "2.2.2"
+version = "2.2.3"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "urllib3-2.2.2-py3-none-any.whl", hash = "sha256:a448b2f64d686155468037e1ace9f2d2199776e17f0a46610480d311f73e3472"},
-    {file = "urllib3-2.2.2.tar.gz", hash = "sha256:dd505485549a7a552833da5e6063639d0d177c04f23bc3864e41e5dc5f612168"},
+    {file = "urllib3-2.2.3-py3-none-any.whl", hash = "sha256:ca899ca043dcb1bafa3e262d73aa25c465bfb49e0bd9dd5d59f1d0acba2f8fac"},
+    {file = "urllib3-2.2.3.tar.gz", hash = "sha256:e7d814a81dad81e6caf2ec9fdedb284ecc9c73076b62654547cc64ccdcae26e9"},
 ]
 
 [package.extras]
@@ -420,4 +437,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "aa072190e1a5c335c379c9f3ab09b14dfcf718050b38b08441ba2a91ffefd935"
+content-hash = "9efdbca22e8f7d122208d160253c194f4f3d177e77a011491bbaac34fac5c237"
