@@ -5,7 +5,7 @@ from ontologytimemachine.utils.mock_responses import mock_response_403
 from ontologytimemachine.proxy_wrapper import HttpRequestWrapper
 from ontologytimemachine.utils.proxy_logic import (
     get_response_from_request,
-    if_intercept_host,
+    if_not_block_host,
     is_archivo_ontology_request,
 )
 from ontologytimemachine.utils.config import Config, parse_arguments
@@ -44,7 +44,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             logger.info(f"HTTPS interception mode: {self.config.httpsInterception}")
 
             # Only intercept if interception is enabled
-            if if_intercept_host(self.config):
+            if if_not_block_host(self.config):
                 logger.info("HTTPS interception is on, forwardig the request")
                 return request
             else:

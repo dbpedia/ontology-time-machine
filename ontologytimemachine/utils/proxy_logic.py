@@ -24,7 +24,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def if_intercept_host(config):
+def if_not_block_host(config):
     if config.httpsInterception in ["none", "all"]:
         return True
     elif config.httpsInterception in ["block"]:

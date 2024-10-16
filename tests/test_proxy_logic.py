@@ -1,6 +1,6 @@
 import unittest
 from ontologytimemachine.utils.proxy_logic import (
-    if_intercept_host,
+    if_not_block_host,
     do_deny_request_due_non_archivo_ontology_uri,
     load_archivo_urls,
     is_archivo_ontology_request,
