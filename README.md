@@ -35,3 +35,15 @@ cp ca-signing-key.pem ~/ontology-time-machine/ca-signing-key.pem
 ### Not working: 
 - curl -x http://0.0.0.0:8899 -H "Accept: text/turtle" --cacert ca-cert.pem http://ontologi.es/days#
 
+
+### Install poetry virtual environment
+```
+poetry install
+```
+
+### Activate poetry environment
+```
+poetry shell
+```
+
+python3 ontologytimemachine/custom_proxy.py --ontoFormat ntriples --ontoVersion originalFailoverLiveLatest --ontoPrecedence enforcedPriority

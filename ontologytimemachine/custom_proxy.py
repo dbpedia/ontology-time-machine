@@ -1,107 +1,132 @@
 from proxy.http.proxy import HttpProxyBasePlugin
-from proxy.http.parser import HttpParser, httpParserTypes
+from proxy.http.parser import HttpParser
 from proxy.common.utils import build_http_response
-from proxy.http.methods import HttpMethods
-from ontologytimemachine.utils.utils import proxy_logic, parse_arguments
-from ontologytimemachine.utils.utils import check_if_archivo_ontology_requested
 from ontologytimemachine.utils.mock_responses import mock_response_403
-from requests.exceptions import SSLError, Timeout, ConnectionError, RequestException
+from ontologytimemachine.proxy_wrapper import HttpRequestWrapper
+from ontologytimemachine.utils.proxy_logic import (
+    get_response_from_request,
+    if_not_block_host,
+    is_archivo_ontology_request,
+)
+from ontologytimemachine.utils.config import Config, parse_arguments
 from http.client import responses
 import proxy
 import sys
 import logging
 
 
-IP = '0.0.0.0'
-PORT = '8899'
+IP = "0.0.0.0"
+PORT = "8899"
 
+config = None
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     def __init__(self, *args, **kwargs):
+        logger.info("Init")
         super().__init__(*args, **kwargs)
-        (self.ontoFormat, self.ontoVersion, self.only_ontologies,
-         self.https_intercept, self.inspect_redirects, self.forward_headers,
-         self.subject_binary_search_threshold) = parse_arguments()
+        self.config = config
 
+    def before_upstream_connection(self, request: HttpParser) -> HttpParser | None:
+        print(config)
+        logger.info("Before upstream connection hook")
+        logger.info(
+            f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}"
+        )
+        wrapped_request = HttpRequestWrapper(request)
 
-    def before_upstream_connection(self, request: HttpParser):
-        logger.info('Before upstream connection hook')
-        logger.info(f'Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}')
+        if wrapped_request.is_connect_request():
+            logger.info(f"HTTPS interception mode: {self.config.httpsInterception}")
 
-        if request.method == b'CONNECT':
-            logger.info(f'HTTPS interception mode: {self.https_intercept}')
             # Only intercept if interception is enabled
-            if self.https_intercept in ['all', 'archivo']:
+            if if_not_block_host(self.config):
+                logger.info("HTTPS interception is on, forwardig the request")
                 return request
             else:
+                logger.info("HTTPS interception is blocked")
                 return None
-            
 
-        ontology_request = check_if_archivo_ontology_requested(request)
-        # If only ontology mode, return None in all other cases
-        if self.only_ontologies and not ontology_request:
-            logger.warning('Request denied: not an ontology request and only ontologies mode is enabled')
-            self.queue_response(mock_response_403)
-            return None
-        
-        if ontology_request:
-            logger.debug('The request is for an ontology')
-            response = proxy_logic(request, self.ontoFormat, self.ontoVersion)
+        # # If only ontology mode, return None in all other cases
+        logger.info(f"Config: {self.config}")
+        response = get_response_from_request(wrapped_request, self.config)
+        if response:
             self.queue_response(response)
             return None
+
         return request
 
+    def do_intercept(self, _request: HttpParser) -> bool:
+        wrapped_request = HttpRequestWrapper(_request)
+        if self.config.httpsInterception in ["all"]:
+            return True
+        elif self.config.httpsInterception in ["none"]:
+            return False
+        elif self.config.httpsInterception in ["archivo"]:
+            if is_archivo_ontology_request(wrapped_request):
+                return True
+            return False
+        else:
+            logger.info(
+                f"httpsInterception: {self.config.httpsInterception} option is not allowed."
+            )
+            return False
 
-    def handle_client_request(self, request: HttpParser):
-        logger.info('Handle client request hook')
-        logger.info(f'Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}')
+    def handle_client_request(self, request: HttpParser) -> HttpParser:
+        logger.info("Handle client request hook")
+        logger.info(
+            f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}"
+        )
 
-        logger.debug(request.method)
-        if request.method == b'CONNECT':
-            return request
-
-        ontology_request = check_if_archivo_ontology_requested(request)
-        if not ontology_request:
-            logger.info('The requested IRI is not part of DBpedia Archivo')
-            return request   
-
-        response = proxy_logic(request, self.ontoFormat, self.ontoVersion)
-        self.queue_response(response)
-
-        return None
-    
+        return request
 
     def handle_upstream_chunk(self, chunk: memoryview):
         return chunk
 
-
     def queue_response(self, response):
         self.client.queue(
             build_http_response(
-                response.status_code, 
-                reason=bytes(responses[response.status_code], 'utf-8'), 
+                response.status_code,
+                reason=bytes(responses[response.status_code], "utf-8"),
                 headers={
-                    b'Content-Type': bytes(response.headers.get('Content-Type'), 'utf-8')
-                }, 
-                body=response.content
+                    b"Content-Type": bytes(
+                        response.headers.get("Content-Type"), "utf-8"
+                    )
+                },
+                body=response.content,
             )
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
+    config = parse_arguments()
+
+    sys.argv = [sys.argv[0]]
+
+    # check it https interception is enabled
+    if config.httpsInterception != "none":
+        sys.argv += [
+            "--ca-key-file",
+            "ca-key.pem",
+            "--ca-cert-file",
+            "ca-cert.pem",
+            "--ca-signing-key-file",
+            "ca-signing-key.pem",
+        ]
 
     sys.argv += [
-        '--ca-key-file', 'ca-key.pem',
-        '--ca-cert-file', 'ca-cert.pem',
-        '--ca-signing-key-file', 'ca-signing-key.pem',
+        "--hostname",
+        IP,
+        "--port",
+        PORT,
+        "--plugins",
+        __name__ + ".OntologyTimeMachinePlugin",
     ]
-    sys.argv += [
-        '--hostname', IP,
-        '--port', PORT,
-        '--plugins', __name__ + '.OntologyTimeMachinePlugin'
-    ]
+
     logger.info("Starting OntologyTimeMachineProxy server...")
     proxy.main()
