@@ -111,24 +111,14 @@ def test_15_linked_web_apis():
 
 
 def generic_test(iri, content_type):
-    response = requests.get(
-        iri,
-        proxies=PROXIES,
-        verify=CA_CERT_PATH,
-        auth=HTTPBasicAuth("admin", "archivo"),
-    )
+    response = requests.get(iri, proxies=PROXIES, verify=CA_CERT_PATH)
     assert response.status_code == 200
     assert iri in response.content.decode("utf-8")
 
 
 def iri_generic_test(iri):
     try:
-        response = requests.get(
-            iri,
-            proxies=PROXIES,
-            verify=CA_CERT_PATH,
-            auth=HTTPBasicAuth("admin", "archivo"),
-        )
+        response = requests.get(iri, proxies=PROXIES, verify=CA_CERT_PATH)
         assert response.status_code == 200
         assert iri in response.content.decode("utf-8")
     except AssertionError:

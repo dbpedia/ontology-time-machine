@@ -37,7 +37,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         logger.info(f"Init - Object ID: {id(self)}")
         super().__init__(*args, **kwargs)
         self.config = config
-        self.current_config = None
+        logger.info(self.config)
 
     def before_upstream_connection(self, request: HttpParser) -> HttpParser | None:
         # self.client.config = None
@@ -47,16 +47,49 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         )
         wrapped_request = HttpRequestWrapper(request)
 
-        # if self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED:
-        #     self.client.config = evaluate_configuration(wrapped_request, self.config)
+        if (
+            self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED
+            or self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.OPTIONAL
+        ):
+            config_from_auth = evaluate_configuration(wrapped_request, self.config)
+            if (
+                not config_from_auth
+                and self.config.clientConfigViaProxyAuth
+                == ClientConfigViaProxyAuth.REQUIRED
+            ):
+                logger.info(
+                    "Client configuration via proxy auth is required btu configuration is not provided, return 500."
+                )
+                self.queue_response(mock_response_500)
+                return None
+            if (
+                not config_from_auth
+                and self.config.clientConfigViaProxyAuth
+                == ClientConfigViaProxyAuth.OPTIONAL
+            ):
+                logger.info("Auth configuration is optional, not procided.")
+            if config_from_auth and not hasattr(self.client, "config"):
+                self.client.config = config_from_auth
+                logger.info(f"New config: {config_from_auth}")
+        if self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.IGNORE:
+            logger.info("Ignore auth even if provided")
+
+        # Check if any config was provided via the authentication parameters
+        # If so, use that config
+        if hasattr(self.client, "config"):
+            logger.info("Using the configuration from the Auth")
+            config = self.client.config
+        else:
+            logger.info("Using the proxy configuration")
+            config = self.config
 
         if wrapped_request.is_connect_request():
             logger.info(
-                f"Handling CONNECT request: configured HTTPS interception mode: {self.config.httpsInterception}"
+                f"Handling CONNECT request: configured HTTPS interception mode: {config.httpsInterception}"
             )
 
             # Check whether to allow CONNECT requests since they can impose a security risk
-            if not do_block_CONNECT_request(self.config):
+            if not do_block_CONNECT_request(config):
                 logger.info("Allowing the CONNECT request")
                 return request
             else:
@@ -64,32 +97,47 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 return None
 
         # # If only ontology mode, return None in all other cases
-        logger.info(f"Config: {self.config}")
-        response = get_response_from_request(wrapped_request, self.config)
+        logger.info(f"Config: {config}")
+        response = get_response_from_request(wrapped_request, config)
         if response:
             self.queue_response(response)
-            self.current_config = None
             return None
 
         return request
 
     def do_intercept(self, _request: HttpParser) -> bool:
         wrapped_request = HttpRequestWrapper(_request)
-        if self.config.httpsInterception == HttpsInterception.ALL:
+
+        # Check if any config was provided via the authentication parameters
+        # If so, use that config
+        if hasattr(self.client, "config"):
+            logger.info("Using the configuration from the Auth")
+            config = self.client.config
+        else:
+            logger.info("Using the proxy configuration")
+            config = self.config
+
+        if config.httpsInterception == HttpsInterception.ALL:
             logger.info("Intercepting all HTTPS requests")
             return True
-        elif self.config.httpsInterception == HttpsInterception.NONE:
+        elif config.httpsInterception == HttpsInterception.NONE:
             logger.info("Intercepting no HTTPS requests")
             return False
-        elif self.config.httpsInterception == HttpsInterception.BLOCK: 
-            logger.error("Reached code block for interception decision in block mode which should have been blocked before")    
-            #this should actually be not triggered as the CONNECT request should have been blocked before
+        elif config.httpsInterception == HttpsInterception.BLOCK:
+            logger.error(
+                "Reached code block for interception decision in block mode which should have been blocked before"
+            )
+            # this should actually be not triggered as the CONNECT request should have been blocked before
             return False
-        elif self.config.httpsInterception == HttpsInterception.ARCHIVO:
+        elif config.httpsInterception == HttpsInterception.ARCHIVO:
             if is_archivo_ontology_request(wrapped_request):
-                logger.info("Intercepting HTTPS request since it is an Archivo ontology request")
+                logger.info(
+                    "Intercepting HTTPS request since it is an Archivo ontology request"
+                )
                 return True
-            logger.info("No Interception of HTTPS request since it is NOT an Archivo ontology request")
+            logger.info(
+                "No Interception of HTTPS request since it is NOT an Archivo ontology request"
+            )
             return False
         else:
             logger.info(
@@ -131,7 +179,7 @@ if __name__ == "__main__":
     sys.argv = [sys.argv[0]]
 
     # check it https interception is enabled
-    if config.httpsInterception != "none":
+    if config.httpsInterception != HttpsInterception.NONE:
         sys.argv += [
             "--ca-key-file",
             "ca-key.pem",
