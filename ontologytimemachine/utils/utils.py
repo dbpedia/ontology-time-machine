@@ -61,19 +61,20 @@ def map_mime_to_format(mime_type):
 
 
 def set_onto_format_headers(wrapped_request, config):
+    print("here")
     logger.info(
-        f"Setting headers based on ontoFormat: {config.ontoFormat} and ontoVersion: {config.ontoVersion}"
+        f"Setting headers based on ontoFormat: {config.ontoFormatConf} and ontoVersion: {config.ontoVersion}"
     )
 
     # if ontoVersion is original and patchAcceptUpstream is False nothing to do here
     if (
         config.ontoVersion == OntoVersion.ORIGINAL
-        and not config.ontoFormat["patchAcceptUpstream"]
+        and not config.ontoFormatConf.patchAcceptUpstream
     ):
         return
 
     # Determine the correct MIME type for the format
-    mime_type = get_mime_type(config.ontoFormat.format.value)
+    mime_type = get_mime_type(config.ontoFormatConf.format.value)
     logger.info(f"Requested mimetype by proxy: {mime_type}")
 
     # Define conditions for modifying the accept header
@@ -89,17 +90,17 @@ def set_onto_format_headers(wrapped_request, config):
     elif (
         len(req_headers) == 1
         and req_headers[0] == "*/*"
-        and config.ontoFormat.precedence
+        and config.ontoFormatConf.precedence
         in [OntoPrecedence.DEFAULT, OntoPrecedence.ENFORCED_PRIORITY]
     ):
         wrapped_request.set_request_accept_header(mime_type)
     elif (
         len(req_headers) > 1
         and mime_type in req_headers
-        and config.ontoFormat.precedence == OntoPrecedence.ENFORCED_PRIORITY
+        and config.ontoFormatConf.precedence == OntoPrecedence.ENFORCED_PRIORITY
     ):
         wrapped_request.set_request_accept_header(mime_type)
-    elif config.ontoFormat.precedence == OntoPrecedence.ALWAYS:
+    elif config.ontoFormatConf.precedence == OntoPrecedence.ALWAYS:
         wrapped_request.set_request_accept_header(mime_type)
 
 

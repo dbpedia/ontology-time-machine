@@ -27,7 +27,7 @@ class TestConfig(unittest.TestCase):
         sys.argv = test_args
         config = parse_arguments()
         self.assertIsInstance(config, Config)
-        self.assertEqual(config.ontoFormat.format.value, "turtle")
+        self.assertEqual(config.ontoFormatConf.format.value, "turtle")
         self.assertEqual(config.ontoVersion, OntoVersion.ORIGINAL)
         self.assertEqual(config.restrictedAccess, False)
         self.assertEqual(config.httpsInterception, HttpsInterception.NONE)

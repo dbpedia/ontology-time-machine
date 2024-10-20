@@ -1,5 +1,6 @@
 import logging
 import requests
+from ontologytimemachine.utils.config import parse_arguments
 from ontologytimemachine.proxy_wrapper import AbstractRequestWrapper
 from ontologytimemachine.utils.config import Config, HttpsInterception
 from ontologytimemachine.utils.utils import (
@@ -60,6 +61,21 @@ def get_response_from_request(wrapped_request, config):
     return response
 
 
+# curl -U "--ca-key-file+ca-key.pem+--ca-cert-file+ca-cert.pem+--ca-signing-key-file+ca-signing-key.pem+--hostname+0.0.0.0+--port+%24PORT+--plugins+ontologytimemachine.custom_proxy.OntologyTimeMachinePlugin+http%3A%2F%2Fweb.de%2F%3Ffoo%3Dbar%26bar%3Dfoo%23whateversssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss:pas" -kvvvx http://localhost:8899 https:///www.example.org
+# decode auth username (is in www-form encoding not to beconfused with url encoding!)
+# parameters parsed into config object
+# configurations merged (cmdline startup config and auth config)
+# apply for current request
+def evaluate_configuration(wrapped_request, config):
+    authentication_str = wrapped_request.get_authentication_from_request()
+    print(authentication_str)
+    username, password = authentication_str.split(":")
+    logger.info(username)
+    config_list = username.split(" ")
+    config = parse_arguments(config_list)
+    return config
+
+
 def is_archivo_ontology_request(wrapped_request):
     """Check if the requested ontology is in the archivo."""
     logger.info("Check if the requested ontology is in archivo")
@@ -88,12 +104,16 @@ def is_archivo_ontology_request(wrapped_request):
     path_parts = request_path.split("/")
     new_path = "/".join(path_parts[:-1])
 
-    if (request_host, new_path) in ARCHIVO_PARSED_URLS:
+    if ((request_host, new_path) in ARCHIVO_PARSED_URLS) or (
+        (request_host, new_path + "/") in ARCHIVO_PARSED_URLS
+    ):
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
         return True
 
     new_path = "/".join(path_parts[:-2])
-    if (request_host, new_path) in ARCHIVO_PARSED_URLS:
+    if ((request_host, new_path) in ARCHIVO_PARSED_URLS) or (
+        (request_host, new_path + "/") in ARCHIVO_PARSED_URLS
+    ):
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
         return True
 
@@ -118,6 +138,8 @@ def request_ontology(url, headers, disableRemovingRedirects=False, timeout=5):
 def proxy_logic(wrapped_request, config):
     logger.info("Proxy has to intervene")
 
+    print(wrapped_request)
+    print(config)
     set_onto_format_headers(wrapped_request, config)
 
     headers = wrapped_request.get_request_headers()

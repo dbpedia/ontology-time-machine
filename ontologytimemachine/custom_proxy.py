@@ -11,13 +11,14 @@ from ontologytimemachine.utils.proxy_logic import (
     get_response_from_request,
     do_block_CONNECT_request,
     is_archivo_ontology_request,
+    evaluate_configuration,
 )
 from ontologytimemachine.utils.config import Config, HttpsInterception, parse_arguments
 from http.client import responses
 import proxy
 import sys
 import logging
-from ontologytimemachine.utils.config import HttpsInterception
+from ontologytimemachine.utils.config import HttpsInterception, ClientConfigViaProxyAuth
 
 
 IP = "0.0.0.0"
@@ -36,28 +37,18 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         logger.info("Init")
         super().__init__(*args, **kwargs)
         self.config = config
+        self.current_config = None
 
     def before_upstream_connection(self, request: HttpParser) -> HttpParser | None:
+        # self.client.config = None
         logger.info("Before upstream connection hook")
         logger.info(
             f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}"
         )
         wrapped_request = HttpRequestWrapper(request)
 
-        authentication = wrapped_request.get_authentication_from_request()
-        if authentication:
-            username, password = authentication.split(":")
-            logger.info(f"Username: {username} - password: {password}")
-            if self.config.username == username and self.config.password == password:
-                logger.info("Successful authentication")
-            else:
-                logger.info("Authentication was not successful")
-                self.queue_response(mock_response_500)
-                return None
-        else:
-            logger.info("Authentication required.")
-            self.queue_response(mock_response_500)
-            return None
+        # if self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED:
+        #     self.client.config = evaluate_configuration(wrapped_request, self.config)
 
         if wrapped_request.is_connect_request():
             logger.info(
@@ -77,6 +68,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         response = get_response_from_request(wrapped_request, self.config)
         if response:
             self.queue_response(response)
+            self.current_config = None
             return None
 
         return request

@@ -115,8 +115,14 @@ class HttpRequestWrapper(AbstractRequestWrapper):
         return url, host, path
 
     def get_authentication_from_request(self) -> str:
-        if b"authorization" in self.request.headers.keys():
-            auth_header = self.request.headers[b"authorization"]
+        is_auth = False
+        # if b"authorization" in self.request.headers.keys():
+        #     auth_header = self.request.headers[b"authorization"]
+        #     is_auth = True
+        if b"proxy-authorization" in self.request.headers.keys():
+            auth_header = self.request.headers[b"proxy-authorization"]
+            is_auth = True
+        if is_auth:
             auth_header = auth_header[1]
             auth_type, encoded_credentials = auth_header.split()
             auth_type = auth_type.decode("utf-8")
