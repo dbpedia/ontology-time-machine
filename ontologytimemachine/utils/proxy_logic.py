@@ -1,5 +1,6 @@
 import logging
 import requests
+from ontologytimemachine.utils.config import parse_arguments
 from ontologytimemachine.proxy_wrapper import AbstractRequestWrapper
 from ontologytimemachine.utils.config import Config, HttpsInterception
 from ontologytimemachine.utils.utils import (
@@ -18,6 +19,13 @@ from ontologytimemachine.utils.mock_responses import (
     mock_response_500,
 )
 from typing import Set, Tuple
+from ontologytimemachine.utils.config import (
+    OntoFormat,
+    OntoFormatConfig,
+    OntoPrecedence,
+    OntoVersion,
+    HttpsInterception,
+)
 
 
 logging.basicConfig(
@@ -30,13 +38,11 @@ def do_block_CONNECT_request(config: Config) -> bool:
     if config.httpsInterception == HttpsInterception.BLOCK:
         logger.info("decided to block CONNECT request due to config enum")
         return True
-    if config.httpsInterception == "block":
-        logger.info("decided to block CONNECT request due 'block' string")
-        return True
     return False
 
-def do_deny_request_due_non_archivo_ontology_uri(wrapped_request, only_ontologies):
-    if only_ontologies:
+
+def do_deny_request_due_non_archivo_ontology_uri(wrapped_request, config):
+    if config.restrictedAccess:
         is_archivo_ontology = is_archivo_ontology_request(wrapped_request)
         if not is_archivo_ontology:
             return True
@@ -44,9 +50,7 @@ def do_deny_request_due_non_archivo_ontology_uri(wrapped_request, only_ontologie
 
 
 def get_response_from_request(wrapped_request, config):
-    do_deny = do_deny_request_due_non_archivo_ontology_uri(
-        wrapped_request, config.restrictedAccess
-    )
+    do_deny = do_deny_request_due_non_archivo_ontology_uri(wrapped_request, config)
     if do_deny:
         logger.warning(
             "Request denied: not an ontology request and only ontologies mode is enabled"
@@ -55,6 +59,21 @@ def get_response_from_request(wrapped_request, config):
 
     response = proxy_logic(wrapped_request, config)
     return response
+
+
+# curl -U "--ca-key-file+ca-key.pem+--ca-cert-file+ca-cert.pem+--ca-signing-key-file+ca-signing-key.pem+--hostname+0.0.0.0+--port+%24PORT+--plugins+ontologytimemachine.custom_proxy.OntologyTimeMachinePlugin+http%3A%2F%2Fweb.de%2F%3Ffoo%3Dbar%26bar%3Dfoo%23whateversssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss:pas" -kvvvx http://localhost:8899 https:///www.example.org
+# decode auth username (is in www-form encoding not to beconfused with url encoding!)
+# parameters parsed into config object
+# configurations merged (cmdline startup config and auth config)
+# apply for current request
+def evaluate_configuration(wrapped_request, config):
+    authentication_str = wrapped_request.get_authentication_from_request()
+    print(authentication_str)
+    username, password = authentication_str.split(":")
+    logger.info(username)
+    config_list = username.split(" ")
+    config = parse_arguments(config_list)
+    return config
 
 
 def is_archivo_ontology_request(wrapped_request):
@@ -68,7 +87,7 @@ def is_archivo_ontology_request(wrapped_request):
     # Extract the request's host and path
     request_host = wrapped_request.get_request_host()
     request_path = wrapped_request.get_request_path()
-    
+
     if (request_host, request_path) in ARCHIVO_PARSED_URLS:
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
         return True
@@ -84,13 +103,17 @@ def is_archivo_ontology_request(wrapped_request):
 
     path_parts = request_path.split("/")
     new_path = "/".join(path_parts[:-1])
-    
-    if (request_host, new_path) in ARCHIVO_PARSED_URLS:
+
+    if ((request_host, new_path) in ARCHIVO_PARSED_URLS) or (
+        (request_host, new_path + "/") in ARCHIVO_PARSED_URLS
+    ):
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
         return True
 
     new_path = "/".join(path_parts[:-2])
-    if (request_host, new_path) in ARCHIVO_PARSED_URLS:
+    if ((request_host, new_path) in ARCHIVO_PARSED_URLS) or (
+        (request_host, new_path + "/") in ARCHIVO_PARSED_URLS
+    ):
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
         return True
 
@@ -115,6 +138,8 @@ def request_ontology(url, headers, disableRemovingRedirects=False, timeout=5):
 def proxy_logic(wrapped_request, config):
     logger.info("Proxy has to intervene")
 
+    print(wrapped_request)
+    print(config)
     set_onto_format_headers(wrapped_request, config)
 
     headers = wrapped_request.get_request_headers()
@@ -123,19 +148,19 @@ def proxy_logic(wrapped_request, config):
     # if the requested format is not in Archivo and the ontoVersion is not original
     # we can stop because the archivo request will not go through
     format = get_format_from_accept_header(headers)
-    if not format and config.ontoVersion != "original":
+    if not format and config.ontoVersion != OntoVersion.ORIGINAL:
         logger.info(f"No format can be used from Archivo")
         return mock_response_500
 
-    if config.ontoVersion == "original":
+    if config.ontoVersion == OntoVersion.ORIGINAL:
         response = fetch_original(ontology, headers, config)
-    elif config.ontoVersion == "originalFailoverLiveLatest":
+    elif config.ontoVersion == OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST:
         response = fetch_failover(
             wrapped_request, ontology, headers, config.disableRemovingRedirects
         )
-    elif config.ontoVersion == "latestArchived":
+    elif config.ontoVersion == OntoVersion.LATEST_ARCHIVED:
         response = fetch_latest_archived(wrapped_request, ontology, headers)
-    elif config.ontoVersion == "timestampArchived":
+    elif config.ontoVersion == OntoVersion.LATEST_ARCHIVED:
         response = fetch_timestamp_archived(wrapped_request, ontology, headers, config)
     # Commenting the manifest related part because it is not supported in the current version
     # elif ontoVersion == 'dependencyManifest':

@@ -1,18 +1,24 @@
 from proxy.http.proxy import HttpProxyBasePlugin
+from proxy.http import httpHeaders
 from proxy.http.parser import HttpParser
 from proxy.common.utils import build_http_response
-from ontologytimemachine.utils.mock_responses import mock_response_403
+from ontologytimemachine.utils.mock_responses import (
+    mock_response_403,
+    mock_response_500,
+)
 from ontologytimemachine.proxy_wrapper import HttpRequestWrapper
 from ontologytimemachine.utils.proxy_logic import (
     get_response_from_request,
     do_block_CONNECT_request,
     is_archivo_ontology_request,
+    evaluate_configuration,
 )
 from ontologytimemachine.utils.config import Config, HttpsInterception, parse_arguments
 from http.client import responses
 import proxy
 import sys
 import logging
+from ontologytimemachine.utils.config import HttpsInterception, ClientConfigViaProxyAuth
 
 
 IP = "0.0.0.0"
@@ -31,17 +37,23 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         logger.info("Init")
         super().__init__(*args, **kwargs)
         self.config = config
+        self.current_config = None
 
     def before_upstream_connection(self, request: HttpParser) -> HttpParser | None:
-        print(config)
+        # self.client.config = None
         logger.info("Before upstream connection hook")
         logger.info(
             f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}"
         )
         wrapped_request = HttpRequestWrapper(request)
 
+        # if self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED:
+        #     self.client.config = evaluate_configuration(wrapped_request, self.config)
+
         if wrapped_request.is_connect_request():
-            logger.info(f"Handling CONNECT request: configured HTTPS interception mode: {self.config.httpsInterception}")
+            logger.info(
+                f"Handling CONNECT request: configured HTTPS interception mode: {self.config.httpsInterception}"
+            )
 
             # Check whether to allow CONNECT requests since they can impose a security risk
             if not do_block_CONNECT_request(self.config):
@@ -56,24 +68,28 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         response = get_response_from_request(wrapped_request, self.config)
         if response:
             self.queue_response(response)
+            self.current_config = None
             return None
 
         return request
 
     def do_intercept(self, _request: HttpParser) -> bool:
         wrapped_request = HttpRequestWrapper(_request)
-        if self.config.httpsInterception in ["all"]:
+        if self.config.httpsInterception in HttpsInterception.ALL:
             return True
-        elif self.config.httpsInterception in ["none"]:
+        elif self.config.httpsInterception in HttpsInterception.NONE:
             return False
         # elif self.config.httpsInterception == HttpsInterception.BLOCK: #this should actually be not triggered
         #     return False
-        elif self.config.httpsInterception in ["archivo"]:
+        elif self.config.httpsInterception in HttpsInterception.ARCHIVO:
             if is_archivo_ontology_request(wrapped_request):
                 return True
             return False
         else:
-            logger.info("Unknown Option for httpsInterception: %s -> fallback to no interception", self.config.httpsInterception)
+            logger.info(
+                "Unknown Option for httpsInterception: %s -> fallback to no interception",
+                self.config.httpsInterception,
+            )
             return False
 
     def handle_client_request(self, request: HttpParser) -> HttpParser:
