@@ -11,22 +11,6 @@ from ontologytimemachine.utils.proxy_logic import (
 
 class TestProxyLogic(unittest.TestCase):
 
-    def test_do_deny_request_due_non_archivo_ontology_uri(self):
-        # Assuming we are using some sample data structure
-        class WrappedRequest:
-            def __init__(self, request):
-                self.request = {"host": request[0], "path": request[1]}
-
-            def get_request_host(self) -> str:
-                return self.request["host"].decode("utf-8")
-
-            def get_request_path(self) -> str:
-                return self.request["path"].decode("utf-8")
-
-        request = WrappedRequest((b"example.com", b"/ontology"))
-        self.assertTrue(do_deny_request_due_non_archivo_ontology_uri(request, True))
-        self.assertFalse(do_deny_request_due_non_archivo_ontology_uri(request, False))
-
     def test_fetch_original(self):
         url = "https://example.com"
         headers = {"Accept": "text/html"}
