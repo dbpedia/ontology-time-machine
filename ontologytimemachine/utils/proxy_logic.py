@@ -1,5 +1,7 @@
 import logging
 import requests
+from ontologytimemachine.proxy_wrapper import AbstractRequestWrapper
+from ontologytimemachine.utils.config import Config, HttpsInterception
 from ontologytimemachine.utils.utils import (
     set_onto_format_headers,
     get_format_from_accept_header,
@@ -31,11 +33,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def if_not_block_host(config):
-    if config.httpsInterception in [HttpsInterception.ALL, HttpsInterception.NONE]:
+def do_block_CONNECT_request(config: Config) -> bool:
+    if config.httpsInterception == HttpsInterception.BLOCK:
+        logger.info("decided to block CONNECT request due to config enum")
         return True
-    elif config.httpsInterception in [HttpsInterception.BLOCK]:
-        return False
     return False
 
 
