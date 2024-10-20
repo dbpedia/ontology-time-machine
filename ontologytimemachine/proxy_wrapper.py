@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from proxy.http.parser import HttpParser
 import logging
 from typing import Tuple, Dict, Any
+import base64
 
 # Configure logger
 logging.basicConfig(
@@ -54,6 +55,10 @@ class AbstractRequestWrapper(ABC):
     def get_request_url_host_path(self) -> Tuple[str, str, str]:
         pass
 
+    @abstractmethod
+    def get_authentication_from_request(self) -> str:
+        pass
+
 
 class HttpRequestWrapper(AbstractRequestWrapper):
     def __init__(self, request: HttpParser) -> None:
@@ -95,7 +100,7 @@ class HttpRequestWrapper(AbstractRequestWrapper):
 
     def get_request_url_host_path(self) -> Tuple[str, str, str]:
         logger.info("Get ontology from request")
-        if (self.request.method in {b"GET", b"HEAD"}) and not self.request.host:
+        if (self.is_get_request or self.is_head_request) and not self.request.host:
             for k, v in self.request.headers.items():
                 if v[0].decode("utf-8") == "Host":
                     host = v[1].decode("utf-8")
@@ -108,3 +113,15 @@ class HttpRequestWrapper(AbstractRequestWrapper):
 
         logger.info(f"Ontology: {url}")
         return url, host, path
+
+    def get_authentication_from_request(self) -> str:
+        if b"authorization" in self.request.headers.keys():
+            auth_header = self.request.headers[b"authorization"]
+            auth_header = auth_header[1]
+            auth_type, encoded_credentials = auth_header.split()
+            auth_type = auth_type.decode("utf-8")
+            if auth_type.lower() != "basic":
+                return None
+            decoded_credentials = base64.b64decode(encoded_credentials).decode()
+            return decoded_credentials
+        return None

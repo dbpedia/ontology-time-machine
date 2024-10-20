@@ -55,6 +55,8 @@ class Config:
     httpsInterception: HttpsInterception = HttpsInterception.ALL
     disableRemovingRedirects: bool = False
     timestamp: str = ""
+    username: str = ""
+    password: str = ""
     # manifest: Dict[str, Any] = None
 
 
@@ -134,6 +136,21 @@ def parse_arguments() -> Config:
         help="Level of the logging: debug, info, warning, error.",
     )
 
+    # Adding username and password arguments
+    parser.add_argument(
+        "--username",
+        type=str,
+        default="admin",
+        help="Username for proxy authentication.",
+    )
+
+    parser.add_argument(
+        "--password",
+        type=str,
+        default="archivo",
+        help="Password for proxy authentication.",
+    )
+
     args = parser.parse_args()
 
     # Check the value of --ontoVersion and prompt for additional arguments if needed
@@ -171,6 +188,8 @@ def parse_arguments() -> Config:
         httpsInterception=args.httpsInterception,
         disableRemovingRedirects=args.disableRemovingRedirects,
         timestamp=args.timestamp if hasattr(args, "timestamp") else "",
+        username=args.username,
+        password=args.password,
     )
 
     return config
