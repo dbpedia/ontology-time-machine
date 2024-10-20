@@ -47,6 +47,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         authentication = wrapped_request.get_authentication_from_request()
         if authentication:
             username, password = authentication.split(":")
+            logger.info(f"Username: {username} - password: {password}")
             if self.config.username == username and self.config.password == password:
                 logger.info("Successful authentication")
             else:
