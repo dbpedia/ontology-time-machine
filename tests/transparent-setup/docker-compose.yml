@@ -1,0 +1,104 @@
+version: '3'
+services:
+
+  # Example/demo service for which http (port 80) and https (port 443) traffic will be routed transparently through the proxy
+  app-proxied:
+    image: ubuntu:20.04 # specify image of your choice here to run your application that needs to be proxied transparently
+    depends_on:
+      - transparent-proxy     # Ensures transparent-proxy is started first - RECOMMENDED
+      # - time-machine        # Ensures time-machine is started first - RECOMMENDED
+    network_mode: "service:transparent-proxy" # Uses the same network (namespace) of the transparent proxy container to route traffic through it - REQUIRED
+    entrypoint: ["sh", "-c", "
+      apt-get update && \
+      apt-get install -y curl raptor2-utils openssl && \
+      curl -I http://example.org && \
+      curl -I https://example.org && \
+      sleep 300000"]
+
+  # Time-machine service for handling HTTPS interception based on the ontology_time_machine image
+  time-machine:
+    build: ../..
+    command: --httpsInterception all # This enables HTTPS interception for all traffic
+    # ports:
+    #   - "8184:8899" # Expose the time machine's port if you want to use the time machine outside of the docker network for debugging
+    networks:
+      - my_network
+
+  # Transparent Proxy service which intercepts traffic of selected containers and redirects it to upstream (time-machine) proxy
+  # will only affect those containers which share the network interface of this service (via network_mode: "service:transparent-proxy")
+  # since time-machine is intended for ontology requests (via HTTP(S)) only traffic for http on port 80 and https on port 443 is redirected
+  transparent-proxy:
+    image: ubuntu:20.04
+    # build: ./transparent-proxy 
+    cap_add:
+      - NET_ADMIN     # Required to manipulate network interfaces and set iptables rules for (transparent) traffic redirection
+      - NET_RAW       # Allows handling raw packets, which is needed for a transparent proxy to identify the original destination of the redirected traffic
+    volumes:
+      - ./3proxy-CONNECT.cfg:/etc/3proxy/3proxy-CONNECT.cfg:ro # Mount the 3proxy configuration for upstream proxy CONNECT requests (https)
+      - ./3proxy-HTTP.cfg:/etc/3proxy/3proxy-HTTP.cfg:ro # Mount the 3proxy configuration for upstream proxy CONNECT requests (https)
+    networks:
+      - my_network
+    entrypoint: ["sh", "-c", "
+      set -x && \
+      echo installing transparent proxy requirements && \
+          apt-get update && \
+          apt-get install -y iptables ipset wget curl socat vim && \
+          wget https://github.com/z3APA3A/3proxy/releases/download/0.9.3/3proxy-0.9.3.x86_64.deb; dpkg -i 3proxy-0.9.3.x86_64.deb && \
+          sleep 3 && \ 
+      echo applying iptable transparent redirection rules && \
+          `# Create an ipset named 'private_ips' for private IP ranges` \
+              ipset create private_ips hash:net && \
+              ipset add private_ips 127.0.0.0/8 && \
+              ipset add private_ips 10.0.0.0/8 && \
+              ipset add private_ips 172.16.0.0/12 && \
+              ipset add private_ips 192.168.0.0/16 && \
+          `# Redirect HTTP traffic (port 80) to port 8081, but exclude private IP ranges using ipset` \
+              iptables -t nat -A OUTPUT -p tcp --dport 80 -m set ! --match-set private_ips dst -j REDIRECT --to-port 8011 && \
+          `# Redirect HTTPS traffic (port 443) to port 8082, but exclude private IP ranges using ipset` \
+              iptables -t nat -A OUTPUT -p tcp --dport 443 -m set ! --match-set private_ips dst -j REDIRECT --to-port 8012 && \
+          iptables -t nat -L -v -n && \
+          service 3proxy stop && \
+          sleep 1 && \
+      echo starting 3proxy HTTP && \ 
+          (/usr/bin/3proxy /etc/3proxy/3proxy-HTTP.cfg &) && \
+      echo starting 3proxy-HTTPs-CONNECT && \
+          /usr/bin/3proxy /etc/3proxy/3proxy-CONNECT.cfg"]
+
+  # Transparent Proxy service to intercept traffic and retrieve original destinations
+  transparent-proxy-old:
+    image: 3proxy/3proxy
+    # build: ./transparent-proxy # Assuming there’s a Dockerfile in a subdirectory named transparent-proxy
+    cap_add:
+      - NET_ADMIN     # Required to manipulate network interfaces and set iptables rules for traffic redirection
+      - NET_RAW       # Allows handling raw packets, which is essential for a transparent proxy to work properly
+    volumes:
+      - ./3proxy-CONNECT.cfg:/etc/3proxy/3proxy.cfg # Mount the 3proxy configuration for SOCKS5
+    networks:
+      - my_network
+    entrypoint: ["sh", "-c", "
+      set -x && \
+      echo applying iptable rules && \
+          apt install -y iptables &&
+          iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8011 && \
+          iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 8012 && \
+      echo starting 3proxy && \
+      exec /usr/bin/3proxy /etc/3proxy/3proxy.cfg"]
+
+
+    # entrypoint: ["sh", "-c", "
+    #       set -x && \
+    #       # sysctl -w net.ipv4.ip_forward=1 && \
+    #       # sysctl -w net.ipv4.conf.all.send_redirects=0 && \
+    #       echo applying iptable rules && \
+    #       # Redirect all HTTP traffic (port 80) to port 8011 where 3proxy will listen for transparently forwarded http requests
+    #       iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8011 && \
+    #       # Redirect all HTTPS traffic (port 443) to port 8012 for HTTPS handling
+    #       iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 8012 && \
+    #       # Start the proxy service
+    #       echo hel lo && \
+    #       /usr/bin/3proxy /etc/3proxy/3proxy.cfg"]
+
+  
+networks:
+  my_network:
+    driver: bridge
