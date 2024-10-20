@@ -1,5 +1,5 @@
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, Any
 
@@ -29,7 +29,7 @@ class OntoVersion(Enum):
     ORIGINAL_FAILOVER_LIVE_LATEST = "originalFailoverLiveLatest"
     LATEST_ARCHIVED = "latestArchived"
     TIMESTAMP_ARCHIVED = "timestampArchived"
-    DEPENDENCY_MANIFEST = "dependencyManifest"
+    # DEPENDENCY_MANIFEST = "dependencyManifest"
 
 
 class HttpsInterception(Enum):
@@ -40,12 +40,19 @@ class HttpsInterception(Enum):
 
 
 @dataclass
+class OntoFormatConfig:
+    format: OntoFormat = OntoFormat.TURTLE
+    precedence: OntoPrecedence = OntoPrecedence.ENFORCED_PRIORITY
+    patchAcceptUpstream: bool = False
+
+
+@dataclass
 class Config:
     logLevel: LogLevel = LogLevel.INFO
-    ontoFormat: Dict[str, Any] = None
-    ontoVersion: OntoVersion = (OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST,)
+    ontoFormat: OntoFormatConfig = field(default_factory=OntoFormatConfig)
+    ontoVersion: OntoVersion = OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST
     restrictedAccess: bool = False
-    httpsInterception: HttpsInterception = (HttpsInterception.ALL,)
+    httpsInterception: HttpsInterception = HttpsInterception.ALL
     disableRemovingRedirects: bool = False
     timestamp: str = ""
     # manifest: Dict[str, Any] = None
@@ -54,7 +61,7 @@ class Config:
 def enum_parser(enum_class, value):
     value_lower = value.lower()
     try:
-        return next(e.value for e in enum_class if e.value.lower() == value_lower)
+        return next(e for e in enum_class if e.value.lower() == value_lower)
     except StopIteration:
         valid_options = ", ".join([e.value for e in enum_class])
         raise ValueError(
@@ -76,7 +83,7 @@ def parse_arguments() -> Config:
     parser.add_argument(
         "--ontoPrecedence",
         type=lambda s: enum_parser(OntoPrecedence, s),
-        default=OntoPrecedence.ENFORCED_PRIORITY.value,
+        default=OntoPrecedence.ENFORCED_PRIORITY,
         help="Precedence of the ontology: default, enforcedPriority, always",
     )
 
@@ -107,7 +114,7 @@ def parse_arguments() -> Config:
     parser.add_argument(
         "--httpsInterception",
         type=lambda s: enum_parser(HttpsInterception, s),
-        default=HttpsInterception.ALL.value,
+        default=HttpsInterception.ALL,
         help="Enable HTTPS interception for specific domains: none, archivo, all, listfilename.",
     )
 
@@ -123,7 +130,7 @@ def parse_arguments() -> Config:
     parser.add_argument(
         "--logLevel",
         type=lambda s: enum_parser(LogLevel, s),
-        default=LogLevel.INFO.value,
+        default=LogLevel.INFO,
         help="Level of the logging: debug, info, warning, error.",
     )
 
@@ -148,17 +155,17 @@ def parse_arguments() -> Config:
     # else:
     #     manifest = None
 
-    # Create ontoFormat dictionary
-    ontoFormat = {
-        "format": args.ontoFormat,
-        "precedence": args.ontoPrecedence,
-        "patchAcceptUpstream": args.patchAcceptUpstream,
-    }
+    # Create the OntoFormatConfig using the parsed arguments
+    onto_format_config = OntoFormatConfig(
+        format=args.ontoFormat,
+        precedence=args.ontoPrecedence,
+        patchAcceptUpstream=args.patchAcceptUpstream,
+    )
 
     # Initialize the Config class with parsed arguments
     config = Config(
         logLevel=args.logLevel,
-        ontoFormat=ontoFormat,
+        ontoFormat=onto_format_config,
         ontoVersion=args.ontoVersion,
         restrictedAccess=args.restrictedAccess,
         httpsInterception=args.httpsInterception,

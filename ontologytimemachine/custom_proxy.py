@@ -33,7 +33,6 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         self.config = config
 
     def before_upstream_connection(self, request: HttpParser) -> HttpParser | None:
-        print(config)
         logger.info("Before upstream connection hook")
         logger.info(
             f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}"

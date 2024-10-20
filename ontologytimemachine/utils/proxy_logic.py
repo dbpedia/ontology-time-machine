@@ -16,6 +16,13 @@ from ontologytimemachine.utils.mock_responses import (
     mock_response_500,
 )
 from typing import Set, Tuple
+from ontologytimemachine.utils.config import (
+    OntoFormat,
+    OntoFormatConfig,
+    OntoPrecedence,
+    OntoVersion,
+    HttpsInterception,
+)
 
 
 logging.basicConfig(
@@ -25,15 +32,15 @@ logger = logging.getLogger(__name__)
 
 
 def if_not_block_host(config):
-    if config.httpsInterception in ["none", "all"]:
+    if config.httpsInterception in [HttpsInterception.ALL, HttpsInterception.NONE]:
         return True
-    elif config.httpsInterception in ["block"]:
+    elif config.httpsInterception in [HttpsInterception.BLOCK]:
         return False
     return False
 
 
-def do_deny_request_due_non_archivo_ontology_uri(wrapped_request, only_ontologies):
-    if only_ontologies:
+def do_deny_request_due_non_archivo_ontology_uri(wrapped_request, config):
+    if config.restrictedAccess:
         is_archivo_ontology = is_archivo_ontology_request(wrapped_request)
         if not is_archivo_ontology:
             return True
@@ -41,9 +48,7 @@ def do_deny_request_due_non_archivo_ontology_uri(wrapped_request, only_ontologie
 
 
 def get_response_from_request(wrapped_request, config):
-    do_deny = do_deny_request_due_non_archivo_ontology_uri(
-        wrapped_request, config.restrictedAccess
-    )
+    do_deny = do_deny_request_due_non_archivo_ontology_uri(wrapped_request, config)
     if do_deny:
         logger.warning(
             "Request denied: not an ontology request and only ontologies mode is enabled"
@@ -65,7 +70,7 @@ def is_archivo_ontology_request(wrapped_request):
     # Extract the request's host and path
     request_host = wrapped_request.get_request_host()
     request_path = wrapped_request.get_request_path()
-    
+
     if (request_host, request_path) in ARCHIVO_PARSED_URLS:
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
         return True
@@ -81,7 +86,7 @@ def is_archivo_ontology_request(wrapped_request):
 
     path_parts = request_path.split("/")
     new_path = "/".join(path_parts[:-1])
-    
+
     if (request_host, new_path) in ARCHIVO_PARSED_URLS:
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
         return True
@@ -120,19 +125,19 @@ def proxy_logic(wrapped_request, config):
     # if the requested format is not in Archivo and the ontoVersion is not original
     # we can stop because the archivo request will not go through
     format = get_format_from_accept_header(headers)
-    if not format and config.ontoVersion != "original":
+    if not format and config.ontoVersion != OntoVersion.ORIGINAL:
         logger.info(f"No format can be used from Archivo")
         return mock_response_500
 
-    if config.ontoVersion == "original":
+    if config.ontoVersion == OntoVersion.ORIGINAL:
         response = fetch_original(ontology, headers, config)
-    elif config.ontoVersion == "originalFailoverLiveLatest":
+    elif config.ontoVersion == OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST:
         response = fetch_failover(
             wrapped_request, ontology, headers, config.disableRemovingRedirects
         )
-    elif config.ontoVersion == "latestArchived":
+    elif config.ontoVersion == OntoVersion.LATEST_ARCHIVED:
         response = fetch_latest_archived(wrapped_request, ontology, headers)
-    elif config.ontoVersion == "timestampArchived":
+    elif config.ontoVersion == OntoVersion.LATEST_ARCHIVED:
         response = fetch_timestamp_archived(wrapped_request, ontology, headers, config)
     # Commenting the manifest related part because it is not supported in the current version
     # elif ontoVersion == 'dependencyManifest':

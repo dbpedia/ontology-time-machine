@@ -1,6 +1,7 @@
 import logging
 import argparse
 from werkzeug.http import parse_accept_header
+from ontologytimemachine.utils.config import OntoVersion, OntoFormat, OntoPrecedence
 
 
 logging.basicConfig(
@@ -66,13 +67,13 @@ def set_onto_format_headers(wrapped_request, config):
 
     # if ontoVersion is original and patchAcceptUpstream is False nothing to do here
     if (
-        config.ontoVersion == "original"
+        config.ontoVersion == OntoVersion.ORIGINAL
         and not config.ontoFormat["patchAcceptUpstream"]
     ):
         return
 
     # Determine the correct MIME type for the format
-    mime_type = get_mime_type(config.ontoFormat["format"])
+    mime_type = get_mime_type(config.ontoFormat.format.value)
     logger.info(f"Requested mimetype by proxy: {mime_type}")
 
     # Define conditions for modifying the accept header
@@ -80,24 +81,25 @@ def set_onto_format_headers(wrapped_request, config):
     logger.info(f"Accept header by request: {request_accept_header}")
     req_headers_with_priority = parse_accept_header_with_priority(request_accept_header)
     req_headers = [x[0] for x in req_headers_with_priority]
-    if not req_headers and config.ontoFormat["precedence"] in [
-        "default",
-        ["enforcedPriority"],
+    if not req_headers and config.ontoFormat.precedence in [
+        OntoPrecedence.DEFAULT,
+        OntoPrecedence.ENFORCED_PRIORITY,
     ]:
         wrapped_request.set_request_accept_header(mime_type)
     elif (
         len(req_headers) == 1
         and req_headers[0] == "*/*"
-        and config.ontoFormat["precedence"] in ["default", "enforcedPriority"]
+        and config.ontoFormat.precedence
+        in [OntoPrecedence.DEFAULT, OntoPrecedence.ENFORCED_PRIORITY]
     ):
         wrapped_request.set_request_accept_header(mime_type)
     elif (
         len(req_headers) > 1
         and mime_type in req_headers
-        and config.ontoFormat["precedence"] == "enforcedPriority"
+        and config.ontoFormat.precedence == OntoPrecedence.ENFORCED_PRIORITY
     ):
         wrapped_request.set_request_accept_header(mime_type)
-    elif config.ontoFormat["precedence"] == "always":
+    elif config.ontoFormat.precedence == OntoPrecedence.ALWAYS:
         wrapped_request.set_request_accept_header(mime_type)
 
 
