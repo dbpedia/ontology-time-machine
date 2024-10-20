@@ -22,7 +22,7 @@ from ontologytimemachine.utils.config import HttpsInterception, ClientConfigViaP
 
 
 IP = "0.0.0.0"
-PORT = "8899"
+PORT = "8896"
 
 config = None
 
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     def __init__(self, *args, **kwargs):
-        logger.info("Init")
+        logger.info(f"Init - Object ID: {id(self)}")
         super().__init__(*args, **kwargs)
         self.config = config
         self.current_config = None
@@ -75,15 +75,21 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
     def do_intercept(self, _request: HttpParser) -> bool:
         wrapped_request = HttpRequestWrapper(_request)
-        if self.config.httpsInterception in HttpsInterception.ALL:
+        if self.config.httpsInterception == HttpsInterception.ALL:
+            logger.info("Intercepting all HTTPS requests")
             return True
-        elif self.config.httpsInterception in HttpsInterception.NONE:
+        elif self.config.httpsInterception == HttpsInterception.NONE:
+            logger.info("Intercepting no HTTPS requests")
             return False
-        # elif self.config.httpsInterception == HttpsInterception.BLOCK: #this should actually be not triggered
-        #     return False
-        elif self.config.httpsInterception in HttpsInterception.ARCHIVO:
+        elif self.config.httpsInterception == HttpsInterception.BLOCK: 
+            logger.error("Reached code block for interception decision in block mode which should have been blocked before")    
+            #this should actually be not triggered as the CONNECT request should have been blocked before
+            return False
+        elif self.config.httpsInterception == HttpsInterception.ARCHIVO:
             if is_archivo_ontology_request(wrapped_request):
+                logger.info("Intercepting HTTPS request since it is an Archivo ontology request")
                 return True
+            logger.info("No Interception of HTTPS request since it is NOT an Archivo ontology request")
             return False
         else:
             logger.info(
