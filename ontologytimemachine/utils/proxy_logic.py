@@ -162,6 +162,7 @@ def request_ontology(url, headers, disableRemovingRedirects=False, timeout=5):
 def proxy_logic(wrapped_request, config):
     logger.info("Proxy has to intervene")
 
+    response = mock_response_500 #default if we somehow forget to set the response
     set_onto_format_headers(wrapped_request, config)
 
     headers = wrapped_request.get_request_headers()

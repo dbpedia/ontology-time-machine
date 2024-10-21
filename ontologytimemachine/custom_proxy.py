@@ -179,7 +179,7 @@ if __name__ == "__main__":
     sys.argv = [sys.argv[0]]
 
     # check it https interception is enabled
-    if config.httpsInterception != HttpsInterception.NONE:
+    if config.httpsInterception != (HttpsInterception.NONE or HttpsInterception.BLOCK):
         sys.argv += [
             "--ca-key-file",
             "ca-key.pem",
@@ -190,12 +190,14 @@ if __name__ == "__main__":
         ]
 
     sys.argv += [
-        "--hostname",
-        IP,
-        "--port",
-        PORT,
-        "--plugins",
-        __name__ + ".OntologyTimeMachinePlugin",
+        "--hostname", IP,
+        "--port", PORT,
+        '--insecure-tls-interception', # without it the proxy would not let through a response using an invalid upstream certificate in interception mode
+                                       # since there currently is a bug in proxypy when a connect request uses an IP address instead of a domain name
+                                       # the proxy would not be able to work corectly in transparent mode using 3proxy setup since it tries to match
+                                       # the IP address as hostname with the certificate instead of the domain name in the SNI field
+        "--log-level", config.logLevel.name,
+        "--plugins", __name__ + ".OntologyTimeMachinePlugin",
     ]
 
     logger.info("Starting OntologyTimeMachineProxy server...")

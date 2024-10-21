@@ -16,6 +16,7 @@ class LogLevel(EnumValuePrint):
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
+    CRITICAL = "critical"
 
 
 class OntoFormat(EnumValuePrint):
