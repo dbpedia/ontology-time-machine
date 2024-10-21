@@ -176,7 +176,7 @@ if __name__ == "__main__":
     sys.argv = [sys.argv[0]]
 
     # check it https interception is enabled
-    if config.httpsInterception != HttpsInterception.NONE:
+    if config.httpsInterception != (HttpsInterception.NONE or HttpsInterception.BLOCK):
         sys.argv += [
             "--ca-key-file",
             "ca-key.pem",
