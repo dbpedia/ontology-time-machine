@@ -100,7 +100,7 @@ def enum_parser(enum_class: Type[E], value: str) -> E:
 def parse_arguments(config_str: str = "") -> Config:
     default_cfg: Config = Config()
     parser = argparse.ArgumentParser(
-        description="Process ontology format and version.",
+        description="Ontology Time Machine Proxy powered by DBpedia Archivo",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
