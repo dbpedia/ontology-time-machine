@@ -19,8 +19,7 @@ import proxy
 import sys
 from ontologytimemachine.utils.config import (
     HttpsInterception,
-    ClientConfigViaProxyAuth,
-    logger,
+    ClientConfigViaProxyAuth
 )
 
 
@@ -36,36 +35,22 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         logger.info(f"Init - Object ID: {id(self)}")
         super().__init__(*args, **kwargs)
         self.config = config
+        logger.debug('debug')
         logger.info(f"Config: {self.config}")
 
     def before_upstream_connection(self, request: HttpParser) -> HttpParser | None:
-        # self.client.config = None
+        # self.client.config = QUOTE_NONE
         logger.info("Before upstream connection hook")
-        logger.info(
-            f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}"
-        )
+        logger.info(f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}")
         wrapped_request = HttpRequestWrapper(request)
 
-        if (
-            self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED
-            or self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.OPTIONAL
-        ):
+        if (self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED or self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.OPTIONAL):
             config_from_auth = evaluate_configuration(wrapped_request, self.config)
-            if (
-                not config_from_auth
-                and self.config.clientConfigViaProxyAuth
-                == ClientConfigViaProxyAuth.REQUIRED
-            ):
-                logger.info(
-                    "Client configuration via proxy auth is required btu configuration is not provided, return 500."
-                )
+            if (not config_from_auth and self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED):
+                logger.info( "Client configuration via proxy auth is required btu configuration is not provided, return 500.")
                 self.queue_response(mock_response_500)
                 return None
-            if (
-                not config_from_auth
-                and self.config.clientConfigViaProxyAuth
-                == ClientConfigViaProxyAuth.OPTIONAL
-            ):
+            if (not config_from_auth and self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.OPTIONAL):
                 logger.info("Auth configuration is optional, not provided.")
             if config_from_auth and not hasattr(self.client, "config"):
                 self.client.config = config_from_auth
@@ -83,9 +68,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             config = self.config
 
         if wrapped_request.is_connect_request():
-            logger.info(
-                f"Handling CONNECT request: configured HTTPS interception mode: {config.httpsInterception}"
-            )
+            logger.info(f"Handling CONNECT request: configured HTTPS interception mode: {config.httpsInterception}")
 
             # Check whether to allow CONNECT requests since they can impose a security risk
             if not do_block_CONNECT_request(config):
@@ -121,33 +104,22 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             logger.info("Intercepting no HTTPS requests")
             return False
         elif config.httpsInterception == HttpsInterception.BLOCK:
-            logger.error(
-                "Reached code block for interception decision in block mode which should have been blocked before"
-            )
+            logger.error("Reached code block for interception decision in block mode which should have been blocked before")
             # this should actually be not triggered as the CONNECT request should have been blocked before
             return False
         elif config.httpsInterception == HttpsInterception.ARCHIVO:
             if is_archivo_ontology_request(wrapped_request):
-                logger.info(
-                    "Intercepting HTTPS request since it is an Archivo ontology request"
-                )
+                logger.info("Intercepting HTTPS request since it is an Archivo ontology request")
                 return True
-            logger.info(
-                "No Interception of HTTPS request since it is NOT an Archivo ontology request"
-            )
+            logger.info("No Interception of HTTPS request since it is NOT an Archivo ontology request")
             return False
         else:
-            logger.info(
-                "Unknown Option for httpsInterception: %s -> fallback to no interception",
-                self.config.httpsInterception,
-            )
+            logger.info("Unknown Option for httpsInterception: %s -> fallback to no interception", self.config.httpsInterception,)
             return False
 
     def handle_client_request(self, request: HttpParser) -> HttpParser:
         logger.info("Handle client request hook")
-        logger.info(
-            f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}"
-        )
+        logger.info(f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}")
 
         return request
 
@@ -172,6 +144,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 if __name__ == "__main__":
 
     config = parse_arguments()
+    from ontologytimemachine.utils.config import logger
 
     sys.argv = [sys.argv[0]]
 

@@ -221,14 +221,19 @@ def parse_arguments(config_str: str = "") -> Config:
 
     # print the default configuration with all nested members
     # print(default_cfg)  # TODO remove
-
-    if args.logLevel != LogLevel.INFO:
-        logging.basicConfig(
-            level=args.logLevel.value,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-        )
-        logger = logging.getLogger(__name__)
-        logger.info(f"Logging level set to: {args.logLevel}")
+    global logger
+    if args.logLevel == LogLevel.DEBUG:
+        logger.setLevel(logging.DEBUG)
+        logger.debug(f"Logging level set to: {args.logLevel}")
+    elif args.logLevel == LogLevel.WARNING:
+        logger.setLevel(logging.WARNING)
+        logger.warning(f"Logging level set to: {args.logLevel}")
+    elif args.logLevel == LogLevel.ERROR:
+        logger.setLevel(logging.ERROR)
+        logger.error(f"Logging level set to: {args.logLevel}")
+    elif args.logLevel == LogLevel.CRITICAL:
+        logger.setLevel(logging.CRITICAL)
+        logger.critical(f"Logging level set to: {args.logLevel}")
 
     # Initialize the Config class with parsed arguments
     config = Config(
