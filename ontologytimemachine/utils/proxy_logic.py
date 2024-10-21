@@ -109,6 +109,7 @@ def is_archivo_ontology_request(wrapped_request):
     if request_path.endswith("/"):
         request_path = request_path.rstrip("/")
     if (request_host, request_path) in ARCHIVO_PARSED_URLS:
+        wrapped_request.set_request_path(request_path)
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
         return True
 
@@ -117,17 +118,27 @@ def is_archivo_ontology_request(wrapped_request):
     path_parts = request_path.split("/")
     new_path = "/".join(path_parts[:-1])
 
-    if ((request_host, new_path) in ARCHIVO_PARSED_URLS) or (
-        (request_host, new_path + "/") in ARCHIVO_PARSED_URLS
-    ):
-        logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
+    if (request_host, new_path) in ARCHIVO_PARSED_URLS:
+        wrapped_request.set_request_path(new_path)
+        logger.info(f"Requested URL: {request_host+new_path} is in Archivo")
+        return True
+
+    new_path = new_path + "/"
+    if (request_host, new_path) in ARCHIVO_PARSED_URLS:
+        wrapped_request.set_request_path(new_path)
+        logger.info(f"Requested URL: {request_host+new_path} is in Archivo")
         return True
 
     new_path = "/".join(path_parts[:-2])
-    if ((request_host, new_path) in ARCHIVO_PARSED_URLS) or (
-        (request_host, new_path + "/") in ARCHIVO_PARSED_URLS
-    ):
-        logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
+    if (request_host, new_path) in ARCHIVO_PARSED_URLS:
+        wrapped_request.set_request_path(new_path)
+        logger.info(f"Requested URL: {request_host+new_path} is in Archivo")
+        return True
+
+    new_path = new_path + "/"
+    if (request_host, new_path) in ARCHIVO_PARSED_URLS:
+        wrapped_request.set_request_path(new_path)
+        logger.info(f"Requested URL: {request_host+new_path} is in Archivo")
         return True
 
     logger.info(f"Requested URL: {request_host+request_path} is NOT in Archivo")
@@ -140,7 +151,7 @@ def request_ontology(url, headers, disableRemovingRedirects=False, timeout=5):
         response = requests.get(
             url=url, headers=headers, allow_redirects=allow_redirects, timeout=5
         )
-        logger.info("Successfully fetched original ontology")
+        logger.info("Successfully fetched ontology")
         return response
     except Exception as e:
         logger.error(f"Error fetching original ontology: {e}")
@@ -154,7 +165,6 @@ def proxy_logic(wrapped_request, config):
     set_onto_format_headers(wrapped_request, config)
 
     headers = wrapped_request.get_request_headers()
-    ontology, _, _ = wrapped_request.get_request_url_host_path()
 
     # if the requested format is not in Archivo and the ontoVersion is not original
     # we can stop because the archivo request will not go through
@@ -164,15 +174,16 @@ def proxy_logic(wrapped_request, config):
         return mock_response_500
 
     if config.ontoVersion == OntoVersion.ORIGINAL:
+        ontology, _, _ = wrapped_request.get_request_url_host_path()
         response = fetch_original(ontology, headers, config)
     elif config.ontoVersion == OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST:
         response = fetch_failover(
-            wrapped_request, ontology, headers, config.disableRemovingRedirects
+            wrapped_request, headers, config.disableRemovingRedirects
         )
     elif config.ontoVersion == OntoVersion.LATEST_ARCHIVED:
         response = fetch_latest_archived(wrapped_request, ontology, headers)
     elif config.ontoVersion == OntoVersion.LATEST_ARCHIVED:
-        response = fetch_timestamp_archived(wrapped_request, ontology, headers, config)
+        response = fetch_timestamp_archived(wrapped_request, headers, config)
     # Commenting the manifest related part because it is not supported in the current version
     # elif ontoVersion == 'dependencyManifest':
     #     response = fetch_dependency_manifest(ontology, headers, manifest)
@@ -187,7 +198,8 @@ def fetch_original(ontology, headers, disableRemovingRedirects):
 
 
 # Failover mode
-def fetch_failover(wrapped_request, ontology, headers, disableRemovingRedirects):
+def fetch_failover(wrapped_request, headers, disableRemovingRedirects):
+    ontology, _, _ = wrapped_request.get_request_url_host_path()
     logger.info(f"Fetching original ontology with failover from URL: {ontology}")
     original_response = request_ontology(ontology, headers, disableRemovingRedirects)
     if original_response.status_code in passthrough_status_codes:
@@ -204,16 +216,16 @@ def fetch_failover(wrapped_request, ontology, headers, disableRemovingRedirects)
             return original_response
         else:
             logging.info(f"The returned type is not the same as the requested one")
-            return fetch_latest_archived(wrapped_request, ontology, headers)
+            return fetch_latest_archived(wrapped_request, headers)
     else:
         logger.info(
             f"The returend status code is not accepted: {original_response.status_code}"
         )
-        return fetch_latest_archived(wrapped_request, ontology, headers)
+        return fetch_latest_archived(wrapped_request, headers)
 
 
 # Fetch the lates version from archivo (no timestamp defined)
-def fetch_latest_archived(wrapped_request, ontology, headers):
+def fetch_latest_archived(wrapped_request, headers):
     if not is_archivo_ontology_request(wrapped_request):
         logger.info(
             "Data needs to be fetched from Archivo, but ontology is not available on Archivo."
@@ -221,12 +233,13 @@ def fetch_latest_archived(wrapped_request, ontology, headers):
         return mock_response_404()
     logger.info("Fetch latest archived")
     format = get_format_from_accept_header(headers)
+    ontology, _, _ = wrapped_request.get_request_url_host_path()
     dbpedia_url = f"{archivo_api}?o={ontology}&f={format}"
     logger.info(f"Fetching from DBpedia Archivo API: {dbpedia_url}")
     return request_ontology(dbpedia_url, headers)
 
 
-def fetch_timestamp_archived(wrapped_request, ontology, headers, config):
+def fetch_timestamp_archived(wrapped_request, headers, config):
     if not is_archivo_ontology_request(wrapped_request):
         logger.info(
             "Data needs to be fetched from Archivo, but ontology is not available on Archivo."
@@ -234,6 +247,7 @@ def fetch_timestamp_archived(wrapped_request, ontology, headers, config):
         return mock_response_404()
     logger.info("Fetch archivo timestamp")
     format = get_format_from_accept_header(headers)
+    ontology, _, _ = wrapped_request.get_request_url_host_path()
     dbpedia_url = f"{archivo_api}?o={ontology}&f={format}&v={config.timestamp}"
     logger.info(f"Fetching from DBpedia Archivo API: {dbpedia_url}")
     return request_ontology(dbpedia_url, headers)
