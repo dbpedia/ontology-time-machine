@@ -145,12 +145,19 @@ def is_archivo_ontology_request(wrapped_request):
     return False
 
 
-def request_ontology(url, headers, disableRemovingRedirects=False, timeout=5):
+def request_ontology(
+    wrapped_request, url, headers, disableRemovingRedirects=False, timeout=5
+):
     allow_redirects = not disableRemovingRedirects
     try:
-        response = requests.get(
-            url=url, headers=headers, allow_redirects=allow_redirects, timeout=5
-        )
+        if wrapped_request.is_head_request():
+            response = requests.head(
+                url=url, headers=headers, allow_redirects=allow_redirects, timeout=5
+            )
+        else:
+            response = requests.get(
+                url=url, headers=headers, allow_redirects=allow_redirects, timeout=5
+            )
         logger.info("Successfully fetched ontology")
         return response
     except Exception as e:
@@ -175,7 +182,7 @@ def proxy_logic(wrapped_request, config):
 
     if config.ontoVersion == OntoVersion.ORIGINAL:
         ontology, _, _ = wrapped_request.get_request_url_host_path()
-        response = fetch_original(ontology, headers, config)
+        response = fetch_original(wrapped_request, ontology, headers, config)
     elif config.ontoVersion == OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST:
         response = fetch_failover(
             wrapped_request, headers, config.disableRemovingRedirects
@@ -192,16 +199,20 @@ def proxy_logic(wrapped_request, config):
 
 
 # Fetch from the original source, no matter what
-def fetch_original(ontology, headers, disableRemovingRedirects):
+def fetch_original(wrapped_request, ontology, headers, disableRemovingRedirects):
     logger.info(f"Fetching original ontology from URL: {ontology}")
-    return request_ontology(ontology, headers, disableRemovingRedirects)
+    return request_ontology(
+        wrapped_request, ontology, headers, disableRemovingRedirects
+    )
 
 
 # Failover mode
 def fetch_failover(wrapped_request, headers, disableRemovingRedirects):
     ontology, _, _ = wrapped_request.get_request_url_host_path()
     logger.info(f"Fetching original ontology with failover from URL: {ontology}")
-    original_response = request_ontology(ontology, headers, disableRemovingRedirects)
+    original_response = request_ontology(
+        wrapped_request, ontology, headers, disableRemovingRedirects
+    )
     if original_response.status_code in passthrough_status_codes:
         requested_mimetypes_with_priority = parse_accept_header_with_priority(
             headers["Accept"]
@@ -236,7 +247,7 @@ def fetch_latest_archived(wrapped_request, headers):
     ontology, _, _ = wrapped_request.get_request_url_host_path()
     dbpedia_url = f"{archivo_api}?o={ontology}&f={format}"
     logger.info(f"Fetching from DBpedia Archivo API: {dbpedia_url}")
-    return request_ontology(dbpedia_url, headers)
+    return request_ontology(wrapped_request, dbpedia_url, headers)
 
 
 def fetch_timestamp_archived(wrapped_request, headers, config):
@@ -250,7 +261,7 @@ def fetch_timestamp_archived(wrapped_request, headers, config):
     ontology, _, _ = wrapped_request.get_request_url_host_path()
     dbpedia_url = f"{archivo_api}?o={ontology}&f={format}&v={config.timestamp}"
     logger.info(f"Fetching from DBpedia Archivo API: {dbpedia_url}")
-    return request_ontology(dbpedia_url, headers)
+    return request_ontology(wrapped_request, dbpedia_url, headers)
 
 
 def fetch_dependency_manifest(ontology, headers, manifest):

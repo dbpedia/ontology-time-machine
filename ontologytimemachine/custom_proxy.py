@@ -37,7 +37,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         logger.info(f"Init - Object ID: {id(self)}")
         super().__init__(*args, **kwargs)
         self.config = config
-        logger.info(self.config)
+        logger.info(f"Config: {self.config}")
 
     def before_upstream_connection(self, request: HttpParser) -> HttpParser | None:
         # self.client.config = None
@@ -67,7 +67,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 and self.config.clientConfigViaProxyAuth
                 == ClientConfigViaProxyAuth.OPTIONAL
             ):
-                logger.info("Auth configuration is optional, not procided.")
+                logger.info("Auth configuration is optional, not provided.")
             if config_from_auth and not hasattr(self.client, "config"):
                 self.client.config = config_from_auth
                 logger.info(f"New config: {config_from_auth}")
@@ -96,8 +96,6 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 logger.info("CONNECT request was blocked due to the configuration")
                 return None
 
-        # # If only ontology mode, return None in all other cases
-        logger.info(f"Config: {config}")
         response = get_response_from_request(wrapped_request, config)
         if response:
             self.queue_response(response)
