@@ -25,6 +25,7 @@ from ontologytimemachine.utils.config import (
     OntoPrecedence,
     OntoVersion,
     HttpsInterception,
+    ClientConfigViaProxyAuth,
 )
 
 
@@ -68,12 +69,24 @@ def get_response_from_request(wrapped_request, config):
 # apply for current request
 def evaluate_configuration(wrapped_request, config):
     authentication_str = wrapped_request.get_authentication_from_request()
-    print(authentication_str)
-    username, password = authentication_str.split(":")
-    logger.info(username)
-    config_list = username.split(" ")
-    config = parse_arguments(config_list)
-    return config
+    if authentication_str:
+        logger.info("Authentication parameters provided, parsing the configuration.")
+        username, password = authentication_str.split(":")
+        logger.info(username)
+        config_list = username.split(" ")
+        config = parse_arguments(config_list)
+        return config
+    else:
+        if config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.OPTIONAL:
+            logger.info(
+                "Client configuration via proxy auth is optional, configuration not provided."
+            )
+            return None
+        elif config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.OPTIONAL:
+            logger.info(
+                "Client configuration via proxy auth is required btu configuration is not provided, return 500."
+            )
+            return None
 
 
 def is_archivo_ontology_request(wrapped_request):
@@ -138,8 +151,6 @@ def request_ontology(url, headers, disableRemovingRedirects=False, timeout=5):
 def proxy_logic(wrapped_request, config):
     logger.info("Proxy has to intervene")
 
-    print(wrapped_request)
-    print(config)
     set_onto_format_headers(wrapped_request, config)
 
     headers = wrapped_request.get_request_headers()

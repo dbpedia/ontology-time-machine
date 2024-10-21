@@ -61,7 +61,6 @@ def map_mime_to_format(mime_type):
 
 
 def set_onto_format_headers(wrapped_request, config):
-    print("here")
     logger.info(
         f"Setting headers based on ontoFormat: {config.ontoFormatConf} and ontoVersion: {config.ontoVersion}"
     )

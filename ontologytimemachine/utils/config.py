@@ -65,9 +65,7 @@ class Config:
     ontoFormatConf: OntoFormatConfig = field(default_factory=OntoFormatConfig)
     ontoVersion: OntoVersion = OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST
     restrictedAccess: bool = False
-    clientConfigViaProxyAuth: ClientConfigViaProxyAuth = (
-        ClientConfigViaProxyAuth.REQUIRED
-    )
+    clientConfigViaProxyAuth: ClientConfigViaProxyAuth = ClientConfigViaProxyAuth.IGNORE
     httpsInterception: HttpsInterception = HttpsInterception.ALL
     disableRemovingRedirects: bool = False
     timestamp: str = ""
@@ -156,7 +154,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(ClientConfigViaProxyAuth, s),
         default=default_cfg.clientConfigViaProxyAuth,
         choices=list(ClientConfigViaProxyAuth),
-        help="Define the config.",
+        help="Define the configuration of the proxy via the proxy auth.",
     )
 
     # Log level
@@ -168,7 +166,10 @@ def parse_arguments(config_str: str = "") -> Config:
         help="Level of the logging: debug, info, warning, error.",
     )
 
-    args = parser.parse_args(config_str)
+    if config_str:
+        args = parser.parse_args(config_str)
+    else:
+        args = parser.parse_args()
 
     # Check the value of --ontoVersion and prompt for additional arguments if needed
     if args.ontoVersion == "timestampArchived":
@@ -190,7 +191,7 @@ def parse_arguments(config_str: str = "") -> Config:
     #     manifest = None
 
     # print the default configuration with all nested members
-    print(default_cfg)  # TODO remove
+    # print(default_cfg)  # TODO remove
 
     # Initialize the Config class with parsed arguments
     config = Config(
