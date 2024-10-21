@@ -1,4 +1,3 @@
-import logging
 import requests
 from ontologytimemachine.utils.config import parse_arguments
 from ontologytimemachine.proxy_wrapper import AbstractRequestWrapper
@@ -26,13 +25,8 @@ from ontologytimemachine.utils.config import (
     OntoVersion,
     HttpsInterception,
     ClientConfigViaProxyAuth,
+    logger,
 )
-
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 
 def do_block_CONNECT_request(config: Config) -> bool:

@@ -1,13 +1,10 @@
-import logging
-import argparse
 from werkzeug.http import parse_accept_header
-from ontologytimemachine.utils.config import OntoVersion, OntoFormat, OntoPrecedence
-
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+from ontologytimemachine.utils.config import (
+    OntoVersion,
+    OntoFormat,
+    OntoPrecedence,
+    logger,
 )
-logger = logging.getLogger(__name__)
 
 
 archivo_api = "https://archivo.dbpedia.org/download"

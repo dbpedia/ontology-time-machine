@@ -1,7 +1,14 @@
 import argparse
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
 from typing import Dict, Any, Type, TypeVar
+
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 class EnumValuePrint(
@@ -210,6 +217,14 @@ def parse_arguments(config_str: str = "") -> Config:
 
     # print the default configuration with all nested members
     # print(default_cfg)  # TODO remove
+
+    if args.logLevel != LogLevel.INFO:
+        logging.basicConfig(
+            level=args.logLevel.value,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+        )
+        logger = logging.getLogger(__name__)
+        logger.info(f"Logging level set to: {args.logLevel}")
 
     # Initialize the Config class with parsed arguments
     config = Config(

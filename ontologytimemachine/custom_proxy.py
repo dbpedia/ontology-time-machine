@@ -17,8 +17,11 @@ from ontologytimemachine.utils.config import Config, HttpsInterception, parse_ar
 from http.client import responses
 import proxy
 import sys
-import logging
-from ontologytimemachine.utils.config import HttpsInterception, ClientConfigViaProxyAuth
+from ontologytimemachine.utils.config import (
+    HttpsInterception,
+    ClientConfigViaProxyAuth,
+    logger,
+)
 
 
 default_cfg: Config = Config()
@@ -26,11 +29,6 @@ config = None
 
 IP = default_cfg.port
 PORT = default_cfg.host
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
