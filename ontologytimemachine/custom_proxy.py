@@ -27,8 +27,8 @@ from ontologytimemachine.utils.config import (
 default_cfg: Config = Config()
 config = None
 
-IP = default_cfg.port
-PORT = default_cfg.host
+IP = default_cfg.host
+PORT = default_cfg.port
 
 
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
