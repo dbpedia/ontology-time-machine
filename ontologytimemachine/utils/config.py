@@ -104,13 +104,15 @@ def parse_arguments(config_str: str = "") -> Config:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
+    help_suffix_template = "(default: %(default)s)"
+
     # Defining ontoFormat argument with nested options
     parser.add_argument(
         "--ontoFormat",
         type=lambda s: enum_parser(OntoFormat, s),
         default=default_cfg.ontoFormatConf.format,
         choices=list(OntoFormat),
-        help="Format of the ontology: turtle, ntriples, rdfxml, htmldocu. (default: %(default)s)",
+        help=f"Format of the ontology: turtle, ntriples, rdfxml, htmldocu. {help_suffix_template}",
     )
 
     parser.add_argument(
@@ -118,14 +120,14 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(OntoPrecedence, s),
         default=default_cfg.ontoFormatConf.precedence,
         choices=list(OntoPrecedence),
-        help="Precedence of the ontology: default, enforcedPriority, always. (default: %(default)s)",
+        help=f"Precedence of the ontology: default, enforcedPriority, always. {help_suffix_template}",
     )
 
     parser.add_argument(
         "--patchAcceptUpstream",
         action="store_true",
         default=default_cfg.ontoFormatConf.patchAcceptUpstream,
-        help="Defines if the Accept Header is patched upstream in original mode. (default: %(default)s)",
+        help=f"Defines if the Accept Header is patched upstream in original mode. {help_suffix_template}",
     )
 
     # Defining ontoVersion argument
@@ -134,7 +136,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(OntoVersion, s),
         default=default_cfg.ontoVersion,
         choices=list(OntoVersion),
-        help="Version of the ontology: original, originalFailoverLive, originalFailoverArchivoMonitor, latestArchive, timestampArchive, dependencyManifest. (default: %(default)s)",
+        help=f"Version of the ontology: original, originalFailoverLive, originalFailoverArchivoMonitor, latestArchive, timestampArchive, dependencyManifest. {help_suffix_template}",
     )
 
     # Enable/disable mode to only proxy requests to ontologies
@@ -142,7 +144,7 @@ def parse_arguments(config_str: str = "") -> Config:
         "--restrictedAccess",
         action="store_true",
         default=default_cfg.restrictedAccess,
-        help="Enable/disable mode to only proxy requests to ontologies stored in Archivo. (default: %(default)s)",
+        help=f"Enable/disable mode to only proxy requests to ontologies stored in Archivo. {help_suffix_template}",
     )
 
     # Enable HTTPS interception for specific domains
@@ -151,7 +153,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(HttpsInterception, s),
         default=default_cfg.httpsInterception,
         choices=list(HttpsInterception),
-        help="Enable HTTPS interception for specific domains: none, archivo, all, listfilename. (default: %(default)s)",
+        help=f"Enable HTTPS interception for specific domains: none, archivo, all, listfilename. {help_suffix_template}",
     )
 
     # Enable/disable inspecting or removing redirects
@@ -159,7 +161,7 @@ def parse_arguments(config_str: str = "") -> Config:
         "--disableRemovingRedirects",
         action="store_true",
         default=default_cfg.disableRemovingRedirects,
-        help="Enable/disable inspecting or removing redirects. (default: %(default)s)",
+        help=f"Enable/disable inspecting or removing redirects. {help_suffix_template}",
     )
 
     parser.add_argument(
@@ -167,7 +169,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(ClientConfigViaProxyAuth, s),
         default=default_cfg.clientConfigViaProxyAuth,
         choices=list(ClientConfigViaProxyAuth),
-        help="Define the configuration of the proxy via the proxy auth. (default: %(default)s)",
+        help=f"Define the configuration of the proxy via the proxy auth. {help_suffix_template}",
     )
 
     # Log level
@@ -176,7 +178,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(LogLevel, s),
         default=default_cfg.logLevel,
         choices=list(LogLevel),
-        help="Level of the logging: debug, info, warning, error. (default: %(default)s)",
+        help=f"Level of the logging: debug, info, warning, error. {help_suffix_template}",
     )
 
     # Host
@@ -184,7 +186,7 @@ def parse_arguments(config_str: str = "") -> Config:
         "--host",
         type=str,
         default=default_cfg.host,
-        help="Hostname or IP address to bind the proxy to. (default: %(default)s)",
+        help=f"Hostname or IP address to bind the proxy to. {help_suffix_template}",
     )
 
     # Port
@@ -192,8 +194,7 @@ def parse_arguments(config_str: str = "") -> Config:
         "--port",
         type=int,
         default=default_cfg.port,
-        help="port"
-        # help="Port number to bind the proxy to. (default: %(default)s)",
+        help=f"Port number to bind the proxy to. {help_suffix_template}",
     )
 
     if config_str:
