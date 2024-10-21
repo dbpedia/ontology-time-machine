@@ -1,0 +1,12 @@
+iri	error_dimension	expected_error	iri_type	comment
+https://data.ontotext.com/resource/leak/	http-code	401		https is not ID
+https://www.w3.org/1999/02/22-rdf-syntax-ns#	None			https is not ID
+http://example.org	None			
+https://example.org	None			
+http://1.1.1.1	None			
+https://1.1.1.1	None			
+https://data.globalchange.gov/gcis.owl	http-code	"403 "		https is not ID
+https://data.ordnancesurvey.co.uk/ontology/geometry/	http-code	404		https is not ID
+https://data.ordnancesurvey.co.uk/ontology/	http-code	301		https is not ID
+https://google.com	None			
+				
