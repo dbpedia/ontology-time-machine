@@ -4,8 +4,13 @@ from requests.auth import HTTPBasicAuth
 import time
 import subprocess
 import itertools
-from ontologytimemachine.custom_proxy import IP, PORT
+from ontologytimemachine.utils.config import Config
 
+
+default_cfg: Config = Config()
+
+IP = default_cfg.port
+PORT = default_cfg.host
 
 PROXY = f"{IP}:{PORT}"
 HTTP_PROXY = f"http://{PROXY}"
