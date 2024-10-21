@@ -17,19 +17,18 @@ from ontologytimemachine.utils.config import Config, HttpsInterception, parse_ar
 from http.client import responses
 import proxy
 import sys
-import logging
-from ontologytimemachine.utils.config import HttpsInterception, ClientConfigViaProxyAuth
+from ontologytimemachine.utils.config import (
+    HttpsInterception,
+    ClientConfigViaProxyAuth,
+    logger,
+)
 
 
-IP = "0.0.0.0"
-PORT = "8896"
-
+default_cfg: Config = Config()
 config = None
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+IP = default_cfg.host
+PORT = default_cfg.port
 
 
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
@@ -188,14 +187,12 @@ if __name__ == "__main__":
         ]
 
     sys.argv += [
-        "--hostname", IP,
-        "--port", PORT,
-        '--insecure-tls-interception', # without it the proxy would not let through a response using an invalid upstream certificate in interception mode
-                                       # since there currently is a bug in proxypy when a connect request uses an IP address instead of a domain name
-                                       # the proxy would not be able to work corectly in transparent mode using 3proxy setup since it tries to match
-                                       # the IP address as hostname with the certificate instead of the domain name in the SNI field
-        "--log-level", config.logLevel.name,
-        "--plugins", __name__ + ".OntologyTimeMachinePlugin",
+        "--hostname",
+        config.host,
+        "--port",
+        config.port,
+        "--plugins",
+        __name__ + ".OntologyTimeMachinePlugin",
     ]
 
     logger.info("Starting OntologyTimeMachineProxy server...")

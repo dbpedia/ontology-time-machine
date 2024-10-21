@@ -1,14 +1,8 @@
 from abc import ABC, abstractmethod
 from proxy.http.parser import HttpParser
-import logging
 from typing import Tuple, Dict, Any
 import base64
-
-# Configure logger
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+from ontologytimemachine.utils.config import logger
 
 
 class AbstractRequestWrapper(ABC):

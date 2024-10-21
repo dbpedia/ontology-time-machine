@@ -1,6 +1,5 @@
 import os
 import hashlib
-import logging
 import requests
 import schedule
 import time
@@ -8,6 +7,7 @@ import csv
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
 from typing import Set, Tuple
+from ontologytimemachine.utils.config import logger
 
 
 ARCHIVO_PARSED_URLS: Set[Tuple[str, str]] = set()
@@ -20,12 +20,6 @@ HASH_FILE_PATH = "ontologytimemachine/utils/archivo_ontologies_hash.txt"
 
 LAST_DOWNLOAD_TIMESTAMP = None
 DOWNLOAD_INTERVAL = timedelta(days=1)  # 1 day interval for checking the download
-
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 
 def schedule_daily_download():

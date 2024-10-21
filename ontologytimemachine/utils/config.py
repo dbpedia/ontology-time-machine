@@ -1,7 +1,14 @@
 import argparse
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
 from typing import Dict, Any, Type, TypeVar
+
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 class EnumValuePrint(
@@ -70,6 +77,8 @@ class Config:
     httpsInterception: HttpsInterception = HttpsInterception.ALL
     disableRemovingRedirects: bool = False
     timestamp: str = ""
+    host: str = "0.0.0.0"
+    port: str = "8896"
     # manifest: Dict[str, Any] = None
 
 
@@ -90,7 +99,10 @@ def enum_parser(enum_class: Type[E], value: str) -> E:
 
 def parse_arguments(config_str: str = "") -> Config:
     default_cfg: Config = Config()
-    parser = argparse.ArgumentParser(description="Process ontology format and version.")
+    parser = argparse.ArgumentParser(
+        description="Process ontology format and version.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
     # Defining ontoFormat argument with nested options
     parser.add_argument(
@@ -98,7 +110,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(OntoFormat, s),
         default=default_cfg.ontoFormatConf.format,
         choices=list(OntoFormat),
-        help="Format of the ontology: turtle, ntriples, rdfxml, htmldocu",
+        help="Format of the ontology: turtle, ntriples, rdfxml, htmldocu. (default: %(default)s)",
     )
 
     parser.add_argument(
@@ -106,14 +118,14 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(OntoPrecedence, s),
         default=default_cfg.ontoFormatConf.precedence,
         choices=list(OntoPrecedence),
-        help="Precedence of the ontology: default, enforcedPriority, always",
+        help="Precedence of the ontology: default, enforcedPriority, always. (default: %(default)s)",
     )
 
     parser.add_argument(
         "--patchAcceptUpstream",
         type=bool,
         default=default_cfg.ontoFormatConf.patchAcceptUpstream,
-        help="Defines if the Accept Header is patched upstream in original mode.",
+        help="Defines if the Accept Header is patched upstream in original mode. (default: %(default)s)",
     )
 
     # Defining ontoVersion argument
@@ -122,7 +134,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(OntoVersion, s),
         default=default_cfg.ontoVersion,
         choices=list(OntoVersion),
-        help="Version of the ontology: original, originalFailoverLive, originalFailoverArchivoMonitor, latestArchive, timestampArchive, dependencyManifest",
+        help="Version of the ontology: original, originalFailoverLive, originalFailoverArchivoMonitor, latestArchive, timestampArchive, dependencyManifest. (default: %(default)s)",
     )
 
     # Enable/disable mode to only proxy requests to ontologies
@@ -130,7 +142,7 @@ def parse_arguments(config_str: str = "") -> Config:
         "--restrictedAccess",
         type=bool,
         default=default_cfg.restrictedAccess,
-        help="Enable/disable mode to only proxy requests to ontologies stored in Archivo.",
+        help="Enable/disable mode to only proxy requests to ontologies stored in Archivo. (default: %(default)s)",
     )
 
     # Enable HTTPS interception for specific domains
@@ -139,7 +151,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(HttpsInterception, s),
         default=default_cfg.httpsInterception,
         choices=list(HttpsInterception),
-        help="Enable HTTPS interception for specific domains: none, archivo, all, listfilename.",
+        help="Enable HTTPS interception for specific domains: none, archivo, all, listfilename. (default: %(default)s)",
     )
 
     # Enable/disable inspecting or removing redirects
@@ -147,7 +159,7 @@ def parse_arguments(config_str: str = "") -> Config:
         "--disableRemovingRedirects",
         type=bool,
         default=default_cfg.disableRemovingRedirects,
-        help="Enable/disable inspecting or removing redirects.",
+        help="Enable/disable inspecting or removing redirects. (default: %(default)s)",
     )
 
     parser.add_argument(
@@ -155,7 +167,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(ClientConfigViaProxyAuth, s),
         default=default_cfg.clientConfigViaProxyAuth,
         choices=list(ClientConfigViaProxyAuth),
-        help="Define the configuration of the proxy via the proxy auth.",
+        help="Define the configuration of the proxy via the proxy auth. (default: %(default)s)",
     )
 
     # Log level
@@ -164,7 +176,23 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(LogLevel, s),
         default=default_cfg.logLevel,
         choices=list(LogLevel),
-        help="Level of the logging: debug, info, warning, error.",
+        help="Level of the logging: debug, info, warning, error. (default: %(default)s)",
+    )
+
+    # Host
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=default_cfg.host,
+        help="Hostname or IP address to bind the proxy to. (default: %(default)s)",
+    )
+
+    # Port
+    parser.add_argument(
+        "--port",
+        type=str,
+        default=default_cfg.port,
+        help="Port number to bind the proxy to. (default: %(default)s)",
     )
 
     if config_str:
@@ -194,6 +222,14 @@ def parse_arguments(config_str: str = "") -> Config:
     # print the default configuration with all nested members
     # print(default_cfg)  # TODO remove
 
+    if args.logLevel != LogLevel.INFO:
+        logging.basicConfig(
+            level=args.logLevel.value,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+        )
+        logger = logging.getLogger(__name__)
+        logger.info(f"Logging level set to: {args.logLevel}")
+
     # Initialize the Config class with parsed arguments
     config = Config(
         logLevel=args.logLevel,
@@ -206,6 +242,8 @@ def parse_arguments(config_str: str = "") -> Config:
         clientConfigViaProxyAuth=args.clientConfigViaProxyAuth,
         disableRemovingRedirects=args.disableRemovingRedirects,
         timestamp=args.timestamp if hasattr(args, "timestamp") else "",
+        host=args.host,
+        port=args.port,
     )
 
     return config
