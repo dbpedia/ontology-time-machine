@@ -78,7 +78,7 @@ class Config:
     disableRemovingRedirects: bool = False
     timestamp: str = ""
     host: str = "0.0.0.0"
-    port: str = "8896"
+    port: int = 8898
     # manifest: Dict[str, Any] = None
 
 
@@ -123,7 +123,7 @@ def parse_arguments(config_str: str = "") -> Config:
 
     parser.add_argument(
         "--patchAcceptUpstream",
-        type=bool,
+        action="store_true",
         default=default_cfg.ontoFormatConf.patchAcceptUpstream,
         help="Defines if the Accept Header is patched upstream in original mode. (default: %(default)s)",
     )
@@ -140,7 +140,7 @@ def parse_arguments(config_str: str = "") -> Config:
     # Enable/disable mode to only proxy requests to ontologies
     parser.add_argument(
         "--restrictedAccess",
-        type=bool,
+        action="store_true",
         default=default_cfg.restrictedAccess,
         help="Enable/disable mode to only proxy requests to ontologies stored in Archivo. (default: %(default)s)",
     )
@@ -157,7 +157,7 @@ def parse_arguments(config_str: str = "") -> Config:
     # Enable/disable inspecting or removing redirects
     parser.add_argument(
         "--disableRemovingRedirects",
-        type=bool,
+        action="store_true",
         default=default_cfg.disableRemovingRedirects,
         help="Enable/disable inspecting or removing redirects. (default: %(default)s)",
     )
@@ -190,9 +190,10 @@ def parse_arguments(config_str: str = "") -> Config:
     # Port
     parser.add_argument(
         "--port",
-        type=str,
+        type=int,
         default=default_cfg.port,
-        help="Port number to bind the proxy to. (default: %(default)s)",
+        help="port"
+        # help="Port number to bind the proxy to. (default: %(default)s)",
     )
 
     if config_str:

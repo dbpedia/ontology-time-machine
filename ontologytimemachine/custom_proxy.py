@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
     sys.argv += [
         "--hostname", config.host,
-        "--port", config.port,
+        "--port", str(config.port),
         # "--log-level", config.logLevel.name,
         '--insecure-tls-interception',  # without it the proxy would not let through a response using an invalid upstream certificate in interception mode
                                         # since there currently is a bug in proxypy when a connect request uses an IP address instead of a domain name
