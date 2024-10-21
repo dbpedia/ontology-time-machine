@@ -21,10 +21,11 @@ import logging
 from ontologytimemachine.utils.config import HttpsInterception, ClientConfigViaProxyAuth
 
 
-IP = "0.0.0.0"
-PORT = "8896"
-
+default_cfg: Config = Config()
 config = None
+
+IP = default_cfg.port
+PORT = default_cfg.host
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -189,9 +190,9 @@ if __name__ == "__main__":
 
     sys.argv += [
         "--hostname",
-        IP,
+        config.host,
         "--port",
-        PORT,
+        config.port,
         "--plugins",
         __name__ + ".OntologyTimeMachinePlugin",
     ]

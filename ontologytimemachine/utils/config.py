@@ -69,6 +69,8 @@ class Config:
     httpsInterception: HttpsInterception = HttpsInterception.ALL
     disableRemovingRedirects: bool = False
     timestamp: str = ""
+    host: str = "0.0.0.0"
+    port: str = "8896"
     # manifest: Dict[str, Any] = None
 
 
@@ -166,6 +168,22 @@ def parse_arguments(config_str: str = "") -> Config:
         help="Level of the logging: debug, info, warning, error.",
     )
 
+    # Host
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=default_cfg.host,
+        help="Hostname or IP address to bind the proxy to. Default is '0.0.0.0'.",
+    )
+
+    # Port
+    parser.add_argument(
+        "--port",
+        type=str,
+        default=default_cfg.port,
+        help="Port number to bind the proxy to. Default is 8896.",
+    )
+
     if config_str:
         args = parser.parse_args(config_str)
     else:
@@ -205,6 +223,8 @@ def parse_arguments(config_str: str = "") -> Config:
         clientConfigViaProxyAuth=args.clientConfigViaProxyAuth,
         disableRemovingRedirects=args.disableRemovingRedirects,
         timestamp=args.timestamp if hasattr(args, "timestamp") else "",
+        host=args.host,
+        port=args.port,
     )
 
     return config
