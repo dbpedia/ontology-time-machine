@@ -11,18 +11,10 @@ class TestConfig(unittest.TestCase):
             "test",
             "--ontoFormat",
             "turtle",
-            "--ontoPrecedence",
-            "enforcedPriority",
-            "--patchAcceptUpstream",
-            "False",
             "--ontoVersion",
             "original",
             "--httpsInterception",
             "none",
-            "--disableRemovingRedirects",
-            "False",
-            "--logLevel",
-            "info",
         ]
         sys.argv = test_args
         config = parse_arguments()

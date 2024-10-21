@@ -153,6 +153,7 @@ def request_ontology(
                 url=url, headers=headers, allow_redirects=allow_redirects, timeout=5
             )
         logger.info("Successfully fetched ontology")
+        print(response.content)
         return response
     except Exception as e:
         logger.error(f"Error fetching original ontology: {e}")
@@ -221,7 +222,7 @@ def fetch_failover(wrapped_request, headers, disableRemovingRedirects):
         if response_mime_type in requested_mimetypes:
             return original_response
         else:
-            logging.info(f"The returned type is not the same as the requested one")
+            logger.info(f"The returned type is not the same as the requested one")
             return fetch_latest_archived(wrapped_request, headers)
     else:
         logger.info(
