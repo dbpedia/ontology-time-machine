@@ -2,7 +2,7 @@ import argparse
 from dataclasses import dataclass, field
 from enum import Enum
 import logging
-from typing import Dict, Any, Type, TypeVar
+from typing import Dict, Any, Type, TypeVar, List
 
 
 logging.basicConfig(
@@ -77,7 +77,7 @@ class Config:
     httpsInterception: HttpsInterception = HttpsInterception.ALL
     disableRemovingRedirects: bool = False
     timestamp: str = ""
-    host: str = "0.0.0.0"
+    host: List[str] = field(default_factory=lambda: ["0.0.0.0", "::"])
     port: int = 8898
     # manifest: Dict[str, Any] = None
 
@@ -185,8 +185,9 @@ def parse_arguments(config_str: str = "") -> Config:
     parser.add_argument(
         "--host",
         type=str,
+        nargs='+',  # Accepts one or more hostnames
         default=default_cfg.host,
-        help=f"Hostname or IP address to bind the proxy to. {help_suffix_template}",
+        help=f"Hostnames or IP addresses to bind the proxy to. Multiple hosts can be provided. {help_suffix_template}",
     )
 
     # Port
