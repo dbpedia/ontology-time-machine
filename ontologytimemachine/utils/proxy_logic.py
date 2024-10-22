@@ -94,6 +94,9 @@ def is_archivo_ontology_request(wrapped_request):
     # Extract the request's host and path
     request_host = wrapped_request.get_request_host()
     request_path = wrapped_request.get_request_path()
+    
+    if not request_path:
+        return any(request_host == url_host for url_host, _ in ARCHIVO_PARSED_URLS)
 
     if (request_host, request_path) in ARCHIVO_PARSED_URLS:
         logger.info(f"Requested URL: {request_host+request_path} is in Archivo")
