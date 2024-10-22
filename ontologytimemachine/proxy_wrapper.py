@@ -80,7 +80,10 @@ class HttpRequestWrapper(AbstractRequestWrapper):
         return self.request.host.decode("utf-8")
 
     def get_request_path(self) -> str:
-        return self.request.path.decode("utf-8")
+        if self.request.path:
+            return self.request.path.decode("utf-8")
+        else:
+            return ""
 
     def set_request_path(self, new_path: str) -> None:
         self.request.path = new_path.encode("utf-8")
@@ -102,15 +105,12 @@ class HttpRequestWrapper(AbstractRequestWrapper):
 
     def get_request_url_host_path(self) -> Tuple[str, str, str]:
         logger.info("Get ontology from request")
-        if (
-            (self.is_get_request or self.is_head_request)
-            and not self.request.host
-            and not self.get_request_host()
-        ):
+        if (self.is_get_request or self.is_head_request) and not self.request.host:
             for k, v in self.request.headers.items():
                 if v[0].decode("utf-8") == "Host":
                     host = v[1].decode("utf-8")
                     path = self.get_request_path()
+                    break
             url = f"https://{host}{path}"
         else:
             host = self.get_request_host()
