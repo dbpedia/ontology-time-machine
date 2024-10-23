@@ -24,7 +24,6 @@ def _print_logger_info(context_info: str, logger: logging.Logger) -> None :
 loggerpp = logging.getLogger(__name__)
 #_print_logger_info("config.py getLogger(__name__)",loggerpp)
 logger = logging.getLogger("ontologytimemachine.utils.config")
-logger = logging.getLogger("ontologytimemachine.utils.config")
 #_print_logger_info("config.py getLogger(ontologytimemachine.utils.config)",loggerpp)
 
 
@@ -87,7 +86,8 @@ class OntoFormatConfig:
 
 @dataclass
 class Config:
-    logLevel: LogLevel = LogLevel.INFO
+    logLevelTimeMachine: LogLevel = LogLevel.INFO
+    logLevelBase: LogLevel = LogLevel.INFO
     ontoFormatConf: OntoFormatConfig = field(default_factory=OntoFormatConfig)
     ontoVersion: OntoVersion = OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST
     restrictedAccess: bool = False
@@ -214,9 +214,18 @@ def parse_arguments(config_str: str = "") -> Config:
 
     # Log level
     parser.add_argument(
-        "--logLevel",
+        "--logLevelTimeMachine",
         type=lambda s: enum_parser(LogLevel, s),
-        default=default_cfg.logLevel,
+        default=default_cfg.logLevelTimeMachine,
+        choices=list(LogLevel),
+        help=f"Level of the logging: debug, info, warning, error. {help_suffix_template}",
+    )
+
+    # Log level
+    parser.add_argument(
+        "--logLevelBase",
+        type=lambda s: enum_parser(LogLevel, s),
+        default=default_cfg.logLevelTimeMachine,
         choices=list(LogLevel),
         help=f"Level of the logging: debug, info, warning, error. {help_suffix_template}",
     )
@@ -267,11 +276,10 @@ def parse_arguments(config_str: str = "") -> Config:
     
     
     logger2 = logger
-    #set the log level or proxypy and other modules #TODO make configurable via cmd line parameter
-    if (True):
-        logging.basicConfig(
-            level=log_level_Enum_to_python_logging(LogLevel.INFO), format="%(asctime)s - |%(name)s| %(levelname)s - %(message)s"
-        )
+    #set the log level of proxypy and other modules
+    logging.basicConfig(
+        level=log_level_Enum_to_python_logging(args.logLevelBase), format="%(asctime)s - |%(name)s| %(levelname)s - %(message)s"
+    )
 
     #set the log level of the time machine independently  
     formatter = logging.Formatter("%(asctime)s ||| %(name)s ||| - %(levelname)s - %(message)s")
@@ -289,23 +297,27 @@ def parse_arguments(config_str: str = "") -> Config:
     #logger2 = logging.getLogger("ontologytimemachine.utils.config")
     #_print_logger_info("before: config.py->parse_arguments getLogger(ontologytimemachine.utils.config)",logger2)
 
-    if args.logLevel == LogLevel.DEBUG:
+    if args.logLevelTimeMachine == LogLevel.DEBUG:
         logger.setLevel(log_level_Enum_to_python_logging(LogLevel.DEBUG))
         #_print_logger_info("after: config.py->parse_arguments getLogger(ontologytimemachine.utils.config)",logger2)
-        logger.debug(f"Logging level set to: {args.logLevel}")
-    elif args.logLevel == LogLevel.WARNING:
+        logger.debug(f"Logging level set to: {args.logLevelTimeMachine}")
+    elif args.logLevelTimeMachine == LogLevel.INFO:
+        logger.setLevel(logging.INFO)
+        logger.info(f"Logging level set to: {args.logLevelTimeMachine}")
+    elif args.logLevelTimeMachine == LogLevel.WARNING:
         logger.setLevel(logging.WARNING)
-        logger.warning(f"Logging level set to: {args.logLevel}")
-    elif args.logLevel == LogLevel.ERROR:
+        logger.warning(f"Logging level set to: {args.logLevelTimeMachine}")
+    elif args.logLevelTimeMachine == LogLevel.ERROR:
         logger.setLevel(logging.ERROR)
-        logger.error(f"Logging level set to: {args.logLevel}")
-    elif args.logLevel == LogLevel.CRITICAL:
+        logger.error(f"Logging level set to: {args.logLevelTimeMachine}")
+    elif args.logLevelTimeMachine == LogLevel.CRITICAL:
         logger.setLevel(logging.CRITICAL)
-        logger.critical(f"Logging level set to: {args.logLevel}")
+        logger.critical(f"Logging level set to: {args.logLevelTimeMachine}")
 
     # Initialize the Config class with parsed arguments
     config = Config(
-        logLevel=args.logLevel,
+        logLevelTimeMachine=args.logLevelTimeMachine,
+        logLevelBase=args.logLevelBase,
         ontoFormatConf=OntoFormatConfig(
             args.ontoFormat, args.ontoPrecedence, args.patchAcceptUpstream
         ),
