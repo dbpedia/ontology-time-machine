@@ -1,0 +1,36 @@
+{
+    "configurations": [
+        {
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Launch Custom Proxy (manual virtual env selection)",
+            "program": "${workspaceFolder}/ontologytimemachine/custom_proxy.py",
+            "args": [
+                "--ontoFormat","ntriples",
+                "--ontoVersion","originalFailoverLiveLatest",
+                "--ontoPrecedence","enforcedPriority",
+                "--httpsInterception","archivo",
+                "--logLevelTimeMachine","debug",
+                "--logLevelBase","info",
+                "--port","8877"
+            ]
+        },
+        { //untested
+            "type": "debugpy",
+            "request": "launch",
+            "name": "Launch Custom Proxy with Poetry venv (Untested)",
+            "program": "${workspaceFolder}/ontologytimemachine/custom_proxy.py",
+            "args": [
+                "--ontoFormat", "ntriples",
+                "--ontoVersion","originalFailoverLiveLatest",
+                "--ontoPrecedence","enforcedPriority"
+            ],
+            "console": "integratedTerminal",
+            "env": {
+                "POETRY_VIRTUALENVS_IN_PROJECT": "true" // tell poetry to create virtualenv in project folder
+            },
+            "python": "${workspaceFolder}/.venv/bin/python", //use the virtualenv created by poetry from the project folder
+            "preLaunchTask": "Poetry Install" // run the task to create virtual environment and install dependencies before launching the script
+        }
+    ]
+}
