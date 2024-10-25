@@ -158,9 +158,13 @@ if __name__ == "__main__":
             "--ca-cert-file", "ca-cert.pem",
             "--ca-signing-key-file", "ca-signing-key.pem",
         ]
+    
+    for host in config.host:
+        sys.argv += [
+            "--hostname", host,
+        ]
 
     sys.argv += [
-        "--hostname", config.host,
         "--port", str(config.port),
         # "--log-level", config.logLevel.name,
         '--insecure-tls-interception',  # without it the proxy would not let through a response using an invalid upstream certificate in interception mode
