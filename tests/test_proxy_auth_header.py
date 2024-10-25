@@ -4,16 +4,17 @@ import logging
 import csv
 from typing import List, Tuple
 from requests.auth import HTTPBasicAuth
+from requests.auth import _basic_auth_str
 from ontologytimemachine.custom_proxy import IP, PORT
 
 # Proxy settings
-PROXY = f"0.0.0.0:{PORT}"
+PROXY = f"0.0.0.0:8894"
 HTTP_PROXY = f"http://{PROXY}"
 HTTPS_PROXY = f"http://{PROXY}"
 PROXIES = {"http": HTTP_PROXY, "https": HTTPS_PROXY}
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.ERROR,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
@@ -35,10 +36,10 @@ def create_fake_response(status_code='error'):
 def make_request_without_proxy(iri: str) -> Tuple[int, str]:
     """Make a direct request to the IRI without using the proxy."""
     headers = {
-        "Content-Type": "text/turtle"
+        "Accept": "text/turtle"
     }
     try:
-        response = requests.get(iri, timeout=10, headers=headers)
+        response = requests.get(iri, timeout=10, headers=headers, allow_redirects=True)
         return response
     except Exception as e:
         # logger.info(f'Error: {e}')
@@ -46,14 +47,16 @@ def make_request_without_proxy(iri: str) -> Tuple[int, str]:
         return create_fake_response()
 
 def make_request_with_proxy(iri: str, mode: str) -> Tuple[int, str]:
+    logger.info('Run')
     """Make a request to the IRI using the proxy."""
     username = f"--ontoVersion {mode}"
     password = "my_password"
     headers = {
-        "Content-Type": "text/turtle"
+        "Accept": "text/turtle",
+        "Proxy-Authorization": _basic_auth_str(username, password)
     }
     try:
-        response = requests.get(iri, proxies=PROXIES, timeout=10, headers=headers, auth=HTTPBasicAuth(username, password))
+        response = requests.get(iri, proxies=PROXIES, headers=headers, allow_redirects=True)
         return response
     except Exception as e:
         # logger.info(f'Error: {e}')
@@ -72,18 +75,10 @@ def test_proxy_responses(test_case):
     # Make direct and proxy requests
     direct_response = make_request_without_proxy(iri)
     proxy_response = make_request_with_proxy(iri, 'original')
+    #proxy_response = make_request_with_proxy(iri, 'original')
+    #proxy_response = make_request_with_proxy(iri, 'laters')
+    #proxy_response = make_request_with_proxy(iri, 'original')
                     
-
-    try:
-        direct_response = requests.get(iri)
-    except Exception as e:
-        logger.error(f"Error making direct request to {iri}: {e}")
-    
-    try:
-        proxy_response = requests.get(iri, proxies=PROXIES)
-    except Exception as e:
-        logger.error(f"Error making proxy request to {iri} using proxy {PROXY}: {e}")
-
     # Evaluation based on error_dimension
     if error_dimension == 'http-code':
         logger.info(f"Comparing direct response status code: expected {expected_error}, got {direct_response.status_code}")

@@ -156,7 +156,6 @@ def request_ontology(
                 url=url, headers=headers, allow_redirects=allow_redirects, timeout=5
             )
         logger.info("Successfully fetched ontology")
-        print(response.content)
         return response
     except Exception as e:
         logger.error(f"Error fetching original ontology: {e}")
@@ -165,7 +164,7 @@ def request_ontology(
 
 # change the function definition and pass only the config
 def proxy_logic(wrapped_request, config):
-    logger.info("Proxy has to intervene")
+    logger.info("Proxy starting to analyze request")
 
     response = mock_response_500 #default if we somehow forget to set the response
     set_onto_format_headers(wrapped_request, config)
@@ -180,15 +179,19 @@ def proxy_logic(wrapped_request, config):
         return mock_response_500
 
     if config.ontoVersion == OntoVersion.ORIGINAL:
+        logger.info('OntoVersion ORIGINAL')
         ontology, _, _ = wrapped_request.get_request_url_host_path()
         response = fetch_original(wrapped_request, ontology, headers, config)
     elif config.ontoVersion == OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST:
+        logger.info('OntoVersion ORIGINAL_FAILOVER_LIVE_LATEST')
         response = fetch_failover(
             wrapped_request, headers, config.disableRemovingRedirects
         )
     elif config.ontoVersion == OntoVersion.LATEST_ARCHIVED:
+        logger.info('OntoVersion LATEST_ARCHIVED')
         response = fetch_latest_archived(wrapped_request, ontology, headers)
-    elif config.ontoVersion == OntoVersion.LATEST_ARCHIVED:
+    elif config.ontoVersion == OntoVersion.TIMESTAMP_ARCHIVED:
+        logger.info('OntoVersion TIMESTAMP_ARCHIVED')
         response = fetch_timestamp_archived(wrapped_request, headers, config)
     # Commenting the manifest related part because it is not supported in the current version
     # elif ontoVersion == 'dependencyManifest':

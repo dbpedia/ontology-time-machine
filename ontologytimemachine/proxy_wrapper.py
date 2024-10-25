@@ -135,5 +135,6 @@ class HttpRequestWrapper(AbstractRequestWrapper):
             if auth_type.lower() != "basic":
                 return None
             decoded_credentials = base64.b64decode(encoded_credentials).decode()
+            logger.info(f'Decoded credentials: {decoded_credentials}')
             return decoded_credentials
         return None

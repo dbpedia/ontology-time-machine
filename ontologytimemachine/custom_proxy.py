@@ -45,6 +45,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         wrapped_request = HttpRequestWrapper(request)
 
         if (self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED or self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.OPTIONAL):
+            logger.info('Setting up config from auth')
             config_from_auth = evaluate_configuration(wrapped_request, self.config)
             if (not config_from_auth and self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED):
                 logger.info( "Client configuration via proxy auth is required btu configuration is not provided, return 500.")
@@ -135,12 +136,11 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 response.status_code,
                 reason=bytes(responses[response.status_code], "utf-8"),
                 headers={
-                    b"Content-Type": bytes(
-                        response.headers.get("Content-Type"), "utf-8"
-                    )
+                    bytes(key, "utf-8"): bytes(value, "utf-8") for key, value in response.headers.items()
                 },
                 body=response.content,
             )
+
         )
 
 
