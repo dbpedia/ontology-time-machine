@@ -108,9 +108,12 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             # this should actually be not triggered as the CONNECT request should have been blocked before
             return False
         elif config.httpsInterception == HttpsInterception.ARCHIVO:
-            if is_archivo_ontology_request(wrapped_request):
-                logger.info("Intercepting HTTPS request since it is an Archivo ontology request")
-                return True
+            try:
+                if is_archivo_ontology_request(wrapped_request):
+                    logger.info("Intercepting HTTPS request since it is an Archivo ontology request")
+                    return True
+            except Exception as e:
+                logger.error(f"Error while checking if request is an Archivo ontology request: {e}", exc_info=True)
             logger.info("No Interception of HTTPS request since it is NOT an Archivo ontology request")
             return False
         else:
