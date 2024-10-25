@@ -85,7 +85,7 @@ class OntoVersionTestCase(unittest.TestCase):
     def make_request_without_proxy(self, iri: str) -> Tuple[int, str]:
         """Make a direct request to the IRI without using the proxy."""
         headers = {
-            "Content-Type": "text/turtle"
+            "Accept": "text/turtle"
         }
         try:
             response = requests.get(iri, timeout=10, headers=headers)
@@ -105,7 +105,7 @@ class OntoVersionTestCase(unittest.TestCase):
         username = f"--ontoVersion {mode}"
         password = "my_password"
         headers = {
-            "Content-Type": "text/turtle"
+            "Accept": "text/turtle"
         }
         try:
             response = requests.get(iri, proxies=proxies, timeout=10, headers=headers, auth=HTTPBasicAuth(username, password))
