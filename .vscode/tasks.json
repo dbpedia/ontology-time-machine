@@ -1,0 +1,64 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Poetry Install",
+            "type": "shell",
+            "command": "poetry install",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Wait for Poetry Run Time-Machine-Proxy",
+            "type": "shell",
+            "command": "poetry run python ontologytimemachine/custom_proxy.py",
+            "isBackground": true, // Runs the task in the background so VS Code can proceed to other tasks.
+            "problemMatcher": {
+                "pattern": [
+                    {
+                        "regexp": ".", // Matches any output line. Used to capture log lines for monitoring task progress.
+                        "file": 1, // Placeholder; not capturing a specific file path here.
+                        "location": 2, // Placeholder; not capturing specific location info (line/column).
+                        "message": 3 // Placeholder; not capturing specific error messages.
+                    }
+                ],
+                "background": {
+                    // "activeOnStart": true, // Marks the task as active immediately upon starting.
+                    "beginsPattern": ".*Starting.*", // Detects the start of the task by matching "Starting proxy" in logs.
+                    "endsPattern": ".*Loaded plugin __main__.OntologyTimeMachinePlugin.*" // Marks task readiness by matching "Loaded plugin" in logs.
+                }
+            },
+            "group": {
+                "kind": "test", // Groups the task as a test so it won’t interfere with build tasks.
+                "isDefault": false
+            },
+            "options": {
+                "shell": {
+                    "executable": "/usr/bin/sh",
+                    "args": [
+                        "-c"
+                    ]
+                }
+            },
+            // "presentation": {
+            //     "reveal": "never", // Hides the task’s terminal output
+            //     "close": true      // Closes the task automatically when tests complete
+            // }
+        },
+        {
+            "label": "Sleep for Time-Machine-Proxy startup",
+            "type": "shell",
+            "command": "sleep 5", // Adjust delay as needed
+            "dependsOn": [
+                "Poetry Run Time-Machine-Proxy"
+            ],
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
+        }
+    ]
+}
