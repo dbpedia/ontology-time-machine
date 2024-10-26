@@ -1,5 +1,7 @@
 from proxy.http.proxy import HttpProxyBasePlugin
 from proxy.http import httpHeaders
+import gzip
+from io import BytesIO
 from proxy.http.parser import HttpParser
 from proxy.common.utils import build_http_response
 from ontologytimemachine.utils.mock_responses import (
@@ -44,7 +46,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         logger.info(f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}")
         wrapped_request = HttpRequestWrapper(request)
 
-        if (self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED or self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.OPTIONAL):
+        if (self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED or self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.OPTIONAL) and not wrapped_request.is_connect_request():
             logger.info('Setting up config from auth')
             config_from_auth = evaluate_configuration(wrapped_request, self.config)
             if (not config_from_auth and self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED):
@@ -81,12 +83,14 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
         response = get_response_from_request(wrapped_request, config)
         if response:
+            logger.info(response.status_code)
             self.queue_response(response)
             return None
 
         return request
 
     def do_intercept(self, _request: HttpParser) -> bool:
+        logger.info('Do intercept hook')
         wrapped_request = HttpRequestWrapper(_request)
 
         # Check if any config was provided via the authentication parameters
@@ -140,7 +144,6 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 },
                 body=response.content,
             )
-
         )
 
 
