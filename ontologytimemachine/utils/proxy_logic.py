@@ -63,6 +63,7 @@ def get_response_from_request(wrapped_request, config):
 # apply for current request
 def evaluate_configuration(wrapped_request, config):
     authentication_str = wrapped_request.get_authentication_from_request()
+    logger.info(f'Evaluate configuration, auth str: {authentication_str}')
     if authentication_str:
         logger.info("Authentication parameters provided, parsing the configuration.")
         username, password = authentication_str.split(":")
@@ -147,19 +148,21 @@ def request_ontology(
 ):
     allow_redirects = not disableRemovingRedirects
     try:
+        logger.info(headers)
+        logger.info(allow_redirects)
         if wrapped_request.is_head_request():
             response = requests.head(
-                url=url, headers=headers, allow_redirects=allow_redirects, timeout=5
+                url=url, headers=headers, allow_redirects=allow_redirects, timeout=3
             )
         else:
             response = requests.get(
-                url=url, headers=headers, allow_redirects=allow_redirects, timeout=5
+                url=url, headers=headers, allow_redirects=allow_redirects, timeout=3
             )
         logger.info("Successfully fetched ontology")
         return response
     except Exception as e:
         logger.error(f"Error fetching original ontology: {e}")
-        return mock_response_404()
+        return None
 
 
 # change the function definition and pass only the config
@@ -201,10 +204,10 @@ def proxy_logic(wrapped_request, config):
 
 
 # Fetch from the original source, no matter what
-def fetch_original(wrapped_request, ontology, headers, disableRemovingRedirects):
+def fetch_original(wrapped_request, ontology, headers, config):
     logger.info(f"Fetching original ontology from URL: {ontology}")
     return request_ontology(
-        wrapped_request, ontology, headers, disableRemovingRedirects
+        wrapped_request, ontology, headers, config.disableRemovingRedirects
     )
 
 
