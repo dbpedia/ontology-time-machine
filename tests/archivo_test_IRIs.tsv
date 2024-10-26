@@ -1,22 +1,22 @@
-iri	error_dimension	expected_error	iri_type	comment
-http://buzzword.org.uk/rdf/personal-link-types#	content	text/html	hash	weird html instead of text/turtle
-http://data.finlex.fi/schema/sfl/	content		slash	0 bytes content-length
-http://data.bigdatagrapes.eu/resource/ontology/	dns	nxdomain	slash	
-http://data.bigdatagrapes.eu/resource/ontology/MeasurementContext	dns	nxdomain	term	
-http://data.ontotext.com/resource/leak/	http-code	502	slash	
-http://data.europa.eu/esco/flow	http-code	406	slash	
-http://bdi.si.ehu.es/bdi/ontologies/ExtruOnt/ExtruOnt	transport	connect-timeout	slash	
-http://catalogus-professorum.org/cpm/2/	transport	connection-refused	slash	
-http://www.w3.org/1999/02/22-rdf-syntax-ns#	None		hash	
-http://xmlns.com/foaf/0.1/	None		slash	
-http://xmlns.com/foaf/0.1/Person	None		term	
-http://dbpedia.org/ontology/	None		term	
-http://dbpedia.org/ontology/Person	None		term	
-https://bag2.basisregistraties.overheid.nl/bag/def/	http-code	404	slash	
-https://bag2.basisregistraties.overheid.nl/bag/def/Gebruiksdoel	http-code	404	term	
-https://id.parliament.uk/schema	http-code	404	slash	slash onto without trailing slash /
-https://id.parliament.uk/schema/Approval	http-code	404	term	slash onto without trailing slash /
-https://bmake.th-brandenburg.de/spv#	http-code	403	hash	
-https://bmake.th-brandenburg.de/spv	http-code	403	hash	just test whether Archivo API is used correctly
-https://w3id.org/ttla/	transport	cert-expired	hash	
-http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf	transport	connection-refused	hash	
+enable_testcase	iri	error_dimension	expected_error	iri_type	comment
+1	http://buzzword.org.uk/rdf/personal-link-types#	content	text/html	hash	weird html instead of text/turtle
+1	http://data.finlex.fi/schema/sfl/	content	0-bytes	slash	0 bytes content-length
+1	http://data.bigdatagrapes.eu/resource/ontology/	dns	nxdomain	slash	
+1	http://data.bigdatagrapes.eu/resource/ontology/MeasurementContext	dns	nxdomain	term	
+1	http://data.ontotext.com/resource/leak/	http-code	502	slash	
+1	http://data.europa.eu/esco/flow	http-code	406	slash	
+1	http://bdi.si.ehu.es/bdi/ontologies/ExtruOnt/ExtruOnt	transport	connect-timeout	slash	
+1	http://catalogus-professorum.org/cpm/2/	transport	connection-refused	slash	
+1	http://www.w3.org/1999/02/22-rdf-syntax-ns#	None		hash	
+1	http://xmlns.com/foaf/0.1/	None		slash	
+1	http://xmlns.com/foaf/0.1/Person	None		term	
+1	http://dbpedia.org/ontology/	None		term	
+1	http://dbpedia.org/ontology/Person	None		term	
+0	https://bag2.basisregistraties.overheid.nl/bag/def/	http-code	404	slash	
+0	https://bag2.basisregistraties.overheid.nl/bag/def/Gebruiksdoel	http-code	404	term	
+0	https://id.parliament.uk/schema	http-code	404	slash	slash onto without trailing slash /
+0	https://id.parliament.uk/schema/Approval	http-code	404	term	slash onto without trailing slash /
+0	https://bmake.th-brandenburg.de/spv#	http-code	403	hash	
+0	https://bmake.th-brandenburg.de/spv	http-code	403	hash	just test whether Archivo API is used correctly
+0	https://w3id.org/ttla/	transport	cert-expired	hash	
+1	http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf	transport	connection-refused	hash	

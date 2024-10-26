@@ -1,5 +1,7 @@
 from proxy.http.proxy import HttpProxyBasePlugin
 from proxy.http import httpHeaders
+import gzip
+from io import BytesIO
 from proxy.http.parser import HttpParser
 from proxy.common.utils import build_http_response
 from ontologytimemachine.utils.mock_responses import (
@@ -40,7 +42,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
     def before_upstream_connection(self, request: HttpParser) -> HttpParser | None:
         # self.client.config = QUOTE_NONE
-        logger.info("Before upstream connection hook")
+        logger.info("Before upstcream connection hook")
         logger.info(f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}")
         wrapped_request = HttpRequestWrapper(request)
 
@@ -66,10 +68,13 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             config = self.client.config
         else:
             logger.info("Using the proxy configuration")
-            config = self.config
-
+            config = self.config            
+        
         if wrapped_request.is_connect_request():
             logger.info(f"Handling CONNECT request: configured HTTPS interception mode: {config.httpsInterception}")
+            # Mark if there is a connect request
+            if not hasattr(self.client, "mark_connect"):
+                self.client.mark_connect = True
 
             # Check whether to allow CONNECT requests since they can impose a security risk
             if not do_block_CONNECT_request(config):
@@ -80,13 +85,15 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 return None
 
         response = get_response_from_request(wrapped_request, config)
-        if response:
+        if response.status_code:
+            logger.info(response.status_code)
             self.queue_response(response)
             return None
 
         return request
 
     def do_intercept(self, _request: HttpParser) -> bool:
+        logger.info('Do intercept hook')
         wrapped_request = HttpRequestWrapper(_request)
 
         # Check if any config was provided via the authentication parameters
@@ -94,6 +101,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         if hasattr(self.client, "config"):
             logger.info("Using the configuration from the Auth")
             config = self.client.config
+            logger.info(f'Config: {config}')
         else:
             logger.info("Using the proxy configuration")
             config = self.config
@@ -125,6 +133,21 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         logger.info("Handle client request hook")
         logger.info(f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}")
 
+        wrapped_request = HttpRequestWrapper(request)
+        if (wrapped_request.is_head_request() or wrapped_request.is_get_request()) and hasattr(self.client, "mark_connect"):
+            if self.client.mark_connect:
+                if hasattr(self.client, "config"):
+                    logger.info("Using the configuration from the Auth")
+                    config = self.client.config
+                else:
+                    logger.info("Using the proxy configuration")
+                    config = self.config  
+                response = get_response_from_request(wrapped_request, config)
+            if response.status_code:
+                logger.info(response.status_code)
+                self.queue_response(response)
+                return None
+
         return request
 
     def handle_upstream_chunk(self, chunk: memoryview):
@@ -140,7 +163,6 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 },
                 body=response.content,
             )
-
         )
 
 
