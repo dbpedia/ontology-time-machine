@@ -61,7 +61,7 @@ class OntoVersion(EnumValuePrint):
     ORIGINAL_FAILOVER_LIVE_LATEST = "originalFailoverLiveLatest"
     LATEST_ARCHIVED = "latestArchived"
     TIMESTAMP_ARCHIVED = "timestampArchived"
-    DEPENDENCY_MANIFEST = "dependencyManifest"
+    #DEPENDENCY_MANIFEST = "dependencyManifest"
 
 
 class HttpsInterception(EnumValuePrint):
@@ -91,7 +91,7 @@ class Config:
     ontoFormatConf: OntoFormatConfig = field(default_factory=OntoFormatConfig)
     ontoVersion: OntoVersion = OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST
     restrictedAccess: bool = False
-    clientConfigViaProxyAuth: ClientConfigViaProxyAuth = ClientConfigViaProxyAuth.IGNORE
+    clientConfigViaProxyAuth: ClientConfigViaProxyAuth = ClientConfigViaProxyAuth.REQUIRED
     httpsInterception: HttpsInterception = HttpsInterception.ALL
     disableRemovingRedirects: bool = False
     timestamp: str = ""

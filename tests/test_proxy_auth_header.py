@@ -14,6 +14,7 @@ PROXY = f"0.0.0.0:8894"
 HTTP_PROXY = f"http://{PROXY}"
 HTTPS_PROXY = f"http://{PROXY}"
 PROXIES = {"http": HTTP_PROXY, "https": HTTPS_PROXY}
+CA_CERT_PATH = "ca-cert.pem"
 
 logging.basicConfig(
     level=logging.ERROR,
@@ -37,7 +38,9 @@ def create_fake_response(status_code='error'):
 
 def make_request_without_proxy(iri: str) -> Tuple[int, str]:
     """Make a direct request to the IRI without using the proxy."""
-    headers = {}
+    headers = {
+        "Accept": "text/turtle"
+    }
     try:
         response = requests.get(iri, timeout=10, headers=headers, allow_redirects=True)
         return response
@@ -73,11 +76,13 @@ def make_request_with_proxy(iri: str, mode: str) -> Tuple[int, str]:
     username = f"--ontoVersion {mode}"
     password = "my_password"
     headers = {
+        "Accept": "text/turtle",
         "Accept-Encoding": "identity",
         "Proxy-Authorization": _basic_auth_str(username, password)
     }
     try:
-        response = requests.get(iri, proxies=PROXIES, headers=headers, timeout=10)
+        # There is an issue here for https requests
+        response = requests.get(iri, proxies=PROXIES, verify=CA_CERT_PATH, headers=headers, timeout=10)
         return response
     except SSLError as e:
         mock_response = Mock()
@@ -103,7 +108,7 @@ def make_request_with_proxy(iri: str, mode: str) -> Tuple[int, str]:
         else:
             mock_response = Mock()
             mock_response.content = ''
-            mock_response.status_code = 406
+            mock_response.status_code = 'error'
             return mock_response
     except Exception as e:
         mock_response = Mock()
@@ -125,48 +130,50 @@ def test_proxy_responses(test_case):
     if enabled == '1':
         # Make direct and proxy requests
         direct_response = make_request_without_proxy(iri)
-        logger.info(direct_response)
-        proxy_response = make_request_with_proxy(iri, 'original')
-        #proxy_response = make_request_with_proxy(iri, 'original')
-        #proxy_response = make_request_with_proxy(iri, 'laters')
-        #proxy_response = make_request_with_proxy(iri, 'original')
-                        
+        proxy_original_response = make_request_with_proxy(iri, 'original')
+        proxy_failover_response = make_request_with_proxy(iri, 'originalFailoverLiveLatest')
+        proxy_archivo_laest_response = make_request_with_proxy(iri, 'latestArchived')
+
         # Evaluation based on error_dimension
         if error_dimension == 'http-code':
             assert int(expected_error) == direct_response.status_code
-            assert int(expected_error) == proxy_response.status_code
+            assert int(expected_error) == proxy_original_response.status_code
+            
 
         elif error_dimension == 'None':
             assert direct_response.status_code == 200
-            assert proxy_response.status_code == 200
+            assert proxy_original_response.status_code == 200
 
         elif error_dimension == 'content':
             if expected_error == 'text_html':
                 assert direct_response.headers.get('Content-Type') == 'text/html'
-                assert proxy_response.headers.get('Content-Type') == 'text/html'
+                assert proxy_original_response.headers.get('Content-Type') == 'text/html'
             elif expected_error == '0-bytes':
                 assert len(direct_response.content) == 0
-                assert len(proxy_response.content) == 0
+                assert len(proxy_original_response.content) == 0
 
         elif error_dimension == 'dns':
             if expected_error == 'nxdomain':
                 assert direct_response.status_code == 'nxdomain-error'
-                assert proxy_response.status_code == 502
+                assert proxy_original_response.status_code == 502
                         
         elif error_dimension == 'transport':
             if expected_error == 'cert-expired':
                 assert direct_response.status_code == 'ssl-error'
-                assert proxy_response.status_code == 'ssl-error'
+                assert proxy_original_response.status_code == 'ssl-error'
             elif expected_error == 'connect-timeout':
                 assert direct_response.status_code == 'timeout-error'
-                assert proxy_response.status_code == 'timeout-error'
+                assert proxy_original_response.status_code == 'timeout-error'
             elif expected_error == 'connect-refused':
                 assert direct_response.status_code == 'connection-refused-error'
-                assert proxy_response.status_code == 'connection-refused-error'
+                assert proxy_original_response.status_code == 'connection-refused-error'
             
-    else:
-        assert True == True
+        assert 200 == proxy_failover_response.status_code
+        assert 200 == proxy_archivo_laest_response.status_code
     
+    else:
+        assert True
+
 
 
 if __name__ == "__main__":

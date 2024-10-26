@@ -45,6 +45,7 @@ def do_deny_request_due_non_archivo_ontology_uri(wrapped_request, config):
 
 
 def get_response_from_request(wrapped_request, config):
+    logger.info('Ger response from tequest')
     do_deny = do_deny_request_due_non_archivo_ontology_uri(wrapped_request, config)
     if do_deny:
         logger.warning(
@@ -148,16 +149,14 @@ def request_ontology(
 ):
     allow_redirects = not disableRemovingRedirects
     try:
-        logger.info(headers)
-        logger.info(allow_redirects)
         if wrapped_request.is_head_request():
-            response = requests.head(
-                url=url, headers=headers, allow_redirects=allow_redirects, timeout=3
-            )
+            response = requests.head(url=url, headers=headers, allow_redirects=allow_redirects, timeout=3)
+            logger.info(response.content)
+            logger.info(response.status_code)
         else:
-            response = requests.get(
-                url=url, headers=headers, allow_redirects=allow_redirects, timeout=3
-            )
+            response = requests.get(url=url, headers=headers, allow_redirects=allow_redirects, timeout=3)
+            logger.info(response.content)
+            logger.info(response.status_code)
         logger.info("Successfully fetched ontology")
         return response
     except Exception as e:
@@ -192,7 +191,7 @@ def proxy_logic(wrapped_request, config):
         )
     elif config.ontoVersion == OntoVersion.LATEST_ARCHIVED:
         logger.info('OntoVersion LATEST_ARCHIVED')
-        response = fetch_latest_archived(wrapped_request, ontology, headers)
+        response = fetch_latest_archived(wrapped_request, headers)
     elif config.ontoVersion == OntoVersion.TIMESTAMP_ARCHIVED:
         logger.info('OntoVersion TIMESTAMP_ARCHIVED')
         response = fetch_timestamp_archived(wrapped_request, headers, config)
@@ -218,25 +217,29 @@ def fetch_failover(wrapped_request, headers, disableRemovingRedirects):
     original_response = request_ontology(
         wrapped_request, ontology, headers, disableRemovingRedirects
     )
-    if original_response.status_code in passthrough_status_codes:
-        requested_mimetypes_with_priority = parse_accept_header_with_priority(
-            headers["Accept"]
-        )
-        requested_mimetypes = [x[0] for x in requested_mimetypes_with_priority]
-        response_mime_type = original_response.headers.get("Content-Type", ";").split(
-            ";"
-        )[0]
-        logger.info(f"Requested mimetypes: {requested_mimetypes}")
-        logger.info(f"Response mimetype: {response_mime_type}")
-        if response_mime_type in requested_mimetypes:
-            return original_response
+    logger.info(f'Original response: {original_response}')
+    if original_response:
+        logger.info('Got an original response')
+        if original_response.status_code in passthrough_status_codes:
+            requested_mimetypes_with_priority = parse_accept_header_with_priority(
+                headers["Accept"]
+            )
+            requested_mimetypes = [x[0] for x in requested_mimetypes_with_priority]
+            response_mime_type = original_response.headers.get("Content-Type", ";").split(
+                ";"
+            )[0]
+            logger.info(f"Requested mimetypes: {requested_mimetypes}")
+            logger.info(f"Response mimetype: {response_mime_type}")
+            if response_mime_type in requested_mimetypes:
+                return original_response
+            else:
+                logger.info(f"The returned type is not the same as the requested one")
+                return fetch_latest_archived(wrapped_request, headers)
         else:
-            logger.info(f"The returned type is not the same as the requested one")
+            logger.info(f"The returend status code is not accepted: {original_response.status_code}")
             return fetch_latest_archived(wrapped_request, headers)
     else:
-        logger.info(
-            f"The returend status code is not accepted: {original_response.status_code}"
-        )
+        logger.info("No original response")
         return fetch_latest_archived(wrapped_request, headers)
 
 
