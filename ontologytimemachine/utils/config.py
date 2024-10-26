@@ -152,7 +152,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(OntoFormat, s),
         default=default_cfg.ontoFormatConf.format,
         choices=list(OntoFormat),
-        help=f"Format of the ontology: turtle, ntriples, rdfxml, htmldocu. {help_suffix_template}",
+        help=f"Format of the ontology. {help_suffix_template}",
     )
 
     parser.add_argument(
@@ -160,7 +160,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(OntoPrecedence, s),
         default=default_cfg.ontoFormatConf.precedence,
         choices=list(OntoPrecedence),
-        help=f"Precedence of the ontology: default, enforcedPriority, always. {help_suffix_template}",
+        help=f"Precedence of the ontology. {help_suffix_template}",
     )
 
     parser.add_argument(
@@ -176,7 +176,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(OntoVersion, s),
         default=default_cfg.ontoVersion,
         choices=list(OntoVersion),
-        help=f"Version of the ontology: original, originalFailoverLive, originalFailoverArchivoMonitor, latestArchive, timestampArchive, dependencyManifest. {help_suffix_template}",
+        help=f"Version of the ontology. {help_suffix_template}",
     )
 
     # Enable/disable mode to only proxy requests to ontologies
@@ -193,7 +193,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(HttpsInterception, s),
         default=default_cfg.httpsInterception,
         choices=list(HttpsInterception),
-        help=f"Enable HTTPS interception for specific domains: none, archivo, all, listfilename. {help_suffix_template}",
+        help=f"Enable HTTPS interception for specific domains. {help_suffix_template}",
     )
 
     # Enable/disable inspecting or removing redirects
@@ -218,7 +218,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(LogLevel, s),
         default=default_cfg.logLevelTimeMachine,
         choices=list(LogLevel),
-        help=f"Level of the logging: debug, info, warning, error. {help_suffix_template}",
+        help=f"Level of the logging. {help_suffix_template}",
     )
 
     # Log level
@@ -227,7 +227,7 @@ def parse_arguments(config_str: str = "") -> Config:
         type=lambda s: enum_parser(LogLevel, s),
         default=default_cfg.logLevelTimeMachine,
         choices=list(LogLevel),
-        help=f"Level of the logging: debug, info, warning, error. {help_suffix_template}",
+        help=f"Level of the logging. {help_suffix_template}",
     )
 
     # Host
