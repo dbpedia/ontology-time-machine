@@ -12,11 +12,11 @@ enable_testcase	iri	error_dimension	expected_error	iri_type	comment
 1	http://xmlns.com/foaf/0.1/Person	None		term	
 1	http://dbpedia.org/ontology/	None		term	
 1	http://dbpedia.org/ontology/Person	None		term	
-0	https://bag2.basisregistraties.overheid.nl/bag/def/	http-code	404	slash	
-0	https://bag2.basisregistraties.overheid.nl/bag/def/Gebruiksdoel	http-code	404	term	
-0	https://id.parliament.uk/schema	http-code	404	slash	slash onto without trailing slash /
-0	https://id.parliament.uk/schema/Approval	http-code	404	term	slash onto without trailing slash /
-0	https://bmake.th-brandenburg.de/spv#	http-code	403	hash	
-0	https://bmake.th-brandenburg.de/spv	http-code	403	hash	just test whether Archivo API is used correctly
-0	https://w3id.org/ttla/	transport	cert-expired	hash	
+1	https://bag2.basisregistraties.overheid.nl/bag/def/	http-code	404	slash	
+1	https://bag2.basisregistraties.overheid.nl/bag/def/Gebruiksdoel	http-code	404	term	
+1	https://id.parliament.uk/schema	http-code	404	slash	slash onto without trailing slash /
+1	https://id.parliament.uk/schema/Approval	http-code	404	term	slash onto without trailing slash /
+1	https://bmake.th-brandenburg.de/spv#	http-code	403	hash	
+1	https://bmake.th-brandenburg.de/spv	http-code	403	hash	just test whether Archivo API is used correctly
+1	https://w3id.org/ttla/	transport	cert-expired	hash	
 1	http://data-gov.tw.rpi.edu/2009/data-gov-twc.rdf	transport	connection-refused	hash	

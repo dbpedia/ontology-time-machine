@@ -8,6 +8,7 @@ from requests.auth import HTTPBasicAuth
 from requests.auth import _basic_auth_str
 from requests.exceptions import SSLError
 from ontologytimemachine.custom_proxy import IP, PORT
+from urllib.parse import quote
 
 # Proxy settings
 PROXY = f"0.0.0.0:8894"
@@ -15,6 +16,7 @@ HTTP_PROXY = f"http://{PROXY}"
 HTTPS_PROXY = f"http://{PROXY}"
 PROXIES = {"http": HTTP_PROXY, "https": HTTPS_PROXY}
 CA_CERT_PATH = "ca-cert.pem"
+
 
 logging.basicConfig(
     level=logging.ERROR,
@@ -75,14 +77,20 @@ def make_request_with_proxy(iri: str, mode: str) -> Tuple[int, str]:
     """Make a request to the IRI using the proxy."""
     username = f"--ontoVersion {mode}"
     password = "my_password"
+    # Encode credentials to handle special characters
+    username_encoded = quote(username)
+    password_encoded = quote(password)
+    proxies = {
+        "http": f"http://{username_encoded}:{password_encoded}@{PROXY}", 
+        "https": f"http://{username_encoded}:{password_encoded}@{PROXY}"
+    }
     headers = {
         "Accept": "text/turtle",
         "Accept-Encoding": "identity",
-        "Proxy-Authorization": _basic_auth_str(username, password)
     }
     try:
         # There is an issue here for https requests
-        response = requests.get(iri, proxies=PROXIES, verify=CA_CERT_PATH, headers=headers, timeout=10)
+        response = requests.get(iri, proxies=proxies, verify=CA_CERT_PATH, headers=headers, timeout=10)
         return response
     except SSLError as e:
         mock_response = Mock()
@@ -131,8 +139,6 @@ def test_proxy_responses(test_case):
         # Make direct and proxy requests
         direct_response = make_request_without_proxy(iri)
         proxy_original_response = make_request_with_proxy(iri, 'original')
-        proxy_failover_response = make_request_with_proxy(iri, 'originalFailoverLiveLatest')
-        proxy_archivo_laest_response = make_request_with_proxy(iri, 'latestArchived')
 
         # Evaluation based on error_dimension
         if error_dimension == 'http-code':
@@ -168,16 +174,17 @@ def test_proxy_responses(test_case):
                 assert direct_response.status_code == 'connection-refused-error'
                 assert proxy_original_response.status_code == 'connection-refused-error'
             
+        
+        proxy_failover_response = make_request_with_proxy(iri, 'originalFailoverLiveLatest')
+        proxy_archivo_latest_response = make_request_with_proxy(iri, 'latestArchived')
+
         assert 200 == proxy_failover_response.status_code
-        assert 200 == proxy_archivo_laest_response.status_code
+        assert 200 == proxy_archivo_latest_response.status_code
     
     else:
         assert True
 
 
-
 if __name__ == "__main__":
-    # You can call pytest from within the script
     pytest.main([__file__])
-    
     

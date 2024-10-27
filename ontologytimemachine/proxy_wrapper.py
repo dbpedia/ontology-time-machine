@@ -36,6 +36,10 @@ class AbstractRequestWrapper(ABC):
     @abstractmethod
     def set_request_path(self, new_path) -> None:
         pass
+    
+    @abstractmethod
+    def set_request_host(self, new_host) -> None:
+        pass
 
     @abstractmethod
     def get_request_headers(self) -> Dict[str, str]:
@@ -77,7 +81,10 @@ class HttpRequestWrapper(AbstractRequestWrapper):
         ).startswith(b"https")
 
     def get_request_host(self) -> str:
-        return self.request.host.decode("utf-8")
+        if self.request.host:
+            return self.request.host.decode("utf-8")
+        else:
+            return ""
 
     def get_request_path(self) -> str:
         if self.request.path:
@@ -88,6 +95,10 @@ class HttpRequestWrapper(AbstractRequestWrapper):
     def set_request_path(self, new_path: str) -> None:
         self.request.path = new_path.encode("utf-8")
         logger.info(f"Request path set to: {new_path}")
+    
+    def set_request_host(self, new_host: str) -> None:
+        self.request.host = new_host.encode("utf-8")
+        logger.info(f"Request path set to: {new_host}")
 
     def get_request_headers(self) -> Dict[str, str]:
         headers: Dict[str, str] = {}

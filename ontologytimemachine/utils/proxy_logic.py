@@ -144,20 +144,15 @@ def is_archivo_ontology_request(wrapped_request):
     return False
 
 
-def request_ontology(
-    wrapped_request, url, headers, disableRemovingRedirects=False, timeout=5
-):
+def request_ontology(wrapped_request, url, headers, disableRemovingRedirects=False, timeout=3):
     allow_redirects = not disableRemovingRedirects
+    logger.info(f'Request parameters: url - {url}, headers - {headers}, allow_redirects - {allow_redirects}')
     try:
         if wrapped_request.is_head_request():
-            response = requests.head(url=url, headers=headers, allow_redirects=allow_redirects, timeout=3)
-            logger.info(response.content)
-            logger.info(response.status_code)
+            response = requests.head(url=url, headers=headers, allow_redirects=allow_redirects, timeout=timeout)
         else:
-            response = requests.get(url=url, headers=headers, allow_redirects=allow_redirects, timeout=3)
-            logger.info(response.content)
-            logger.info(response.status_code)
-        logger.info("Successfully fetched ontology")
+            response = requests.get(url=url, headers=headers, allow_redirects=allow_redirects, timeout=timeout)
+        logger.info(f"Successfully fetched ontology - status_code: {response.status_code}")
         return response
     except Exception as e:
         logger.error(f"Error fetching original ontology: {e}")
@@ -255,8 +250,14 @@ def fetch_latest_archived(wrapped_request, headers):
     ontology, _, _ = wrapped_request.get_request_url_host_path()
     dbpedia_url = f"{archivo_api}?o={ontology}&f={format}"
     logger.info(f"Fetching from DBpedia Archivo API: {dbpedia_url}")
+    response = request_ontology(wrapped_request, dbpedia_url, headers)
+    if response.status_code != 500:
+        return response
+    ontology = ontology.replace('http://', 'https://')
+    logger.info(f'HTTPS ontology: {ontology}')
+    dbpedia_url = f"{archivo_api}?o={ontology}&f={format}"
+    logger.info(f"Fetching from DBpedia Archivo API - https: {dbpedia_url}")
     return request_ontology(wrapped_request, dbpedia_url, headers)
-
 
 def fetch_timestamp_archived(wrapped_request, headers, config):
     if not is_archivo_ontology_request(wrapped_request):
