@@ -20,7 +20,7 @@
 # use "log" without pathname in config to log to stdout.
 # plugins are located in /usr/local/3proxy/libexec (/libexec for chroot config).
 
-# switched to ubuntu:20.04 to not have problems with apt install on ubuntu 20.04 hosts
+# switched to ubuntu:20.04 to not have problems with apt install on docker hosts with ubuntu 20.04 
 FROM ubuntu:20.04 AS buildenv 
 # COPY . 3proxyt
 RUN apt-get update && apt-get install -y git gcc build-essential libssl-dev tree
@@ -45,6 +45,7 @@ FROM ubuntu:20.04
 #                                                               /lib/x86_64-linux-gnu/libdl.so.2 -> libdl-2.31.so
 COPY --from=buildenv /lib/x86_64-linux-gnu/libdl-2.31.so /lib/
 RUN ln -s /lib/libdl-2.31.so /lib/libdl.so.2
+RUN apt-get update && apt-get install -y iptables ipset curl # openssl socat
 
 COPY --from=buildenv 3proxy/bin/* /bin/
 # COPY --from=buildenv 3proxy/bin/3proxy /bin/
