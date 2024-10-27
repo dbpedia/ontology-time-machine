@@ -1,4 +1,4 @@
-version: '2.4' #starting from version 3.4, docker-compose supports healthcheck startperiod but only 2.x supports condition: service_healthy
+version: '2.4' # only 2.x supports condition: service_health #starting from version 3.4, docker-compose supports healthcheck startperiod 
 services:
 
   # Example/demo service for which http (port 80) and https (port 443) traffic will be routed transparently through the proxy
@@ -8,7 +8,12 @@ services:
       transparent-proxy:
         condition: service_healthy # Ensures transparent-proxy is started and transparent setup via time-machine is working - RECOMMENDED    
     network_mode: "service:transparent-proxy" # Uses the same network (namespace) of the transparent proxy container to route traffic through it - REQUIRED
-    entrypoint: ["sh", "-c", "
+    # template to try to automatically add time-machine CA root certificate to the app container for well-known base images with package managers
+    volumes: 
+      - ../../ca-cert.pem:/certs/custom_root.crt:ro
+      - ./add-cert-pre-entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/usr/local/bin/entrypoint.sh"]
+    command: ["sh", "-c", "echo 'Running main application command...' && \
       apt-get update && \
       apt-get install -y curl raptor2-utils openssl socat && \
       curl -I http://example.org && \
@@ -44,14 +49,17 @@ services:
       - my_network
     healthcheck:
       # test: ["CMD", "sh", "-c", "sleep 3 && curl -If http://1.1.1.1 && curl -Ikf https://1.1.1.1 && sleep 30"] #  && curl -x localhost:8011 -If http://1.1.1.1
-      # test: ["CMD", "sh", "-c", "sleep 5 && curl -If http://1.1.1.1 && curl -Ikf https://1.1.1.1 && ( [ -f /tmp/healthcheck_flag ] && sleep 60 || touch /tmp/healthcheck_flag )"]
-      test: ["CMD", "sh", "-c", "sleep 5 && curl -If http://1.1.1.1 && curl -Ikf https://1.1.1.1 && ( [ -f /dev/shm/healthcheck_flag ] && sleep 60 || touch /dev/shm/healthcheck_flag )"]
+      test: ["CMD", "sh", "-c", "sleep 5 && curl -If http://1.1.1.1 && curl -Ikf https://1.1.1.1 && curl -x localhost:8011 -If http://1.1.1.1 && ( [ -f /dev/shm/healthcheck_flag ] && sleep 60 || touch /dev/shm/healthcheck_flag )"]
       interval: 1s # in compose 2.4 the first health check waits for the interval time -> make that short and add long sleep to the test command at the end that is only executed after the first health check
       timeout: 80s # 
       retries: 3
       # start_period: 5s # Only available in docker-compose version 3.4 and above -> add sleep in front to test cmd instead
     entrypoint: ["sh", "-c", "
       set -x && \
+      echo starting 3proxy instance for HTTP_to_HTTP-proxied && \ 
+          (/usr/bin/3proxy /etc/3proxy/3proxy-HTTP.cfg &) && \
+      echo starting 3proxy instance for TLS_to_HTTP-CONNECT-tunnelled && \
+          (/usr/bin/3proxy /etc/3proxy/3proxy-TLS.cfg &) && \
       echo applying iptable transparent redirection rules && \
           `# Create an ipset named 'private_ips' for private IP ranges` \
               ipset create private_ips hash:net && \
@@ -64,10 +72,6 @@ services:
           `# Redirect HTTPS traffic (port 443) to port 8012, but exclude private IP ranges using ipset` \
               iptables -t nat -A OUTPUT -p tcp --dport 443 -m set ! --match-set private_ips dst -j REDIRECT --to-port 8012 && \
           iptables -t nat -L -v -n && \
-      echo starting 3proxy instance for HTTP_to_HTTP-proxied && \ 
-          (/usr/bin/3proxy /etc/3proxy/3proxy-HTTP.cfg &) && \
-      echo starting 3proxy instance for TLS_to_HTTP-CONNECT-tunnelled && \
-          (/usr/bin/3proxy /etc/3proxy/3proxy-TLS.cfg &) && \
       sleep inf"]
 
 networks:
