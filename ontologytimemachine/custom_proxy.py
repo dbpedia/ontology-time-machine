@@ -45,6 +45,17 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
         logger.info("Before upstcream connection hook")
         logger.info(f"Request method: {request.method} - Request host: {request.host} - Request path: {request.path} - Request headers: {request.headers}")
         wrapped_request = HttpRequestWrapper(request)
+        
+        try:
+            self.client.request_host = wrapped_request.get_request_host()
+        except:
+            logger.info('No host')
+        
+        try:
+            self.client.request_path = wrapped_request.get_request_path()
+        except:
+            logger.info('No path')
+                
 
         if (self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.REQUIRED or self.config.clientConfigViaProxyAuth == ClientConfigViaProxyAuth.OPTIONAL):
             logger.info('Setting up config from auth')
@@ -83,12 +94,20 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             else:
                 logger.info("CONNECT request was blocked due to the configuration")
                 return None
-
-        response = get_response_from_request(wrapped_request, config)
-        if response.status_code:
-            logger.info(response.status_code)
-            self.queue_response(response)
-            return None
+    
+        if not wrapped_request.is_connect_request():
+            logger.info('Skip for the connect request')
+            if not wrapped_request.get_request_host():
+                if hasattr(self.client, "request_host"):
+                    wrapped_request.set_request_host(self.client.request_host)
+            if not wrapped_request.get_request_path():
+                if hasattr(self.client, "request_path"):
+                    wrapped_request.set_request_path(self.client.request_path)
+            response = get_response_from_request(wrapped_request, config)
+            if response.status_code:
+                logger.info('Queue response from proxy logic')
+                self.queue_response(response)
+                return None
 
         return request
 
@@ -117,6 +136,12 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             # this should actually be not triggered as the CONNECT request should have been blocked before
             return False
         elif config.httpsInterception == HttpsInterception.ARCHIVO:
+            if not wrapped_request.get_request_host():
+                if hasattr(self.client, "request_host"):
+                    wrapped_request.set_request_host(self.client.request_host)
+            if not wrapped_request.get_request_path():
+                if hasattr(self.client, "request_path"):
+                    wrapped_request.set_request_path(self.client.request_path)
             try:
                 if is_archivo_ontology_request(wrapped_request):
                     logger.info("Intercepting HTTPS request since it is an Archivo ontology request")
@@ -135,6 +160,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
 
         wrapped_request = HttpRequestWrapper(request)
         if (wrapped_request.is_head_request() or wrapped_request.is_get_request()) and hasattr(self.client, "mark_connect"):
+            logger.info('HEAD or GET and has mark_connect')
             if self.client.mark_connect:
                 if hasattr(self.client, "config"):
                     logger.info("Using the configuration from the Auth")
@@ -142,12 +168,20 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                 else:
                     logger.info("Using the proxy configuration")
                     config = self.config  
+                if not wrapped_request.get_request_host():
+                    if hasattr(self.client, "request_host"):
+                        wrapped_request.set_request_host(self.client.request_host)
+                if not wrapped_request.get_request_path():
+                    if hasattr(self.client, "request_path"):
+                        wrapped_request.set_request_path(self.client.request_path)
+
                 response = get_response_from_request(wrapped_request, config)
-            if response.status_code:
+            if response and response.status_code:
                 logger.info(response.status_code)
                 self.queue_response(response)
                 return None
 
+        logger.info('Return original request')
         return request
 
     def handle_upstream_chunk(self, chunk: memoryview):
