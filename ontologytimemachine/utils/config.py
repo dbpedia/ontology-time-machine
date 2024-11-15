@@ -2,6 +2,7 @@ import argparse
 from dataclasses import dataclass, field
 from enum import Enum
 import logging
+import os
 from typing import Dict, Any, Type, TypeVar, List
 
 
@@ -86,7 +87,7 @@ class OntoFormatConfig:
 
 @dataclass
 class Config:
-    logLevelTimeMachine: LogLevel = LogLevel.INFO
+    logLevelTimeMachine: LogLevel = LogLevel.DEBUG
     logLevelBase: LogLevel = LogLevel.INFO
     ontoFormatConf: OntoFormatConfig = field(default_factory=OntoFormatConfig)
     ontoVersion: OntoVersion = OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST
@@ -288,11 +289,12 @@ def parse_arguments(config_str: str = "") -> Config:
         handler = logging.StreamHandler()
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        logger.propagate = False # Prevent the logger from propagating to the root logger otherwise it will print the log messages twice
-    # else:
-    # # If handlers exist, apply the formatter to all handlers
-    #     for handler in logger.handlers:
-    #         handler.setFormatter(formatter)
+        if (not "PYTEST_CURRENT_TEST" in os.environ):
+            logger.propagate = False # Prevent the logger from propagating to the root logger otherwise it will print the log messages twice
+    else:
+    # If handlers exist, apply the formatter to all handlers
+        for handler in logger.handlers:
+            handler.setFormatter(formatter)
 
     # global logger2 #global var seems to construct a logger object with another id which is weird seems to lead to issues with setting the log levels
     #logger2 = logging.getLogger("ontologytimemachine.utils.config")

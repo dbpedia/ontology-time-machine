@@ -1,3 +1,4 @@
+import logging
 from proxy.http.proxy import HttpProxyBasePlugin
 from proxy.http import httpHeaders
 import gzip
@@ -21,23 +22,41 @@ import proxy
 import sys
 from ontologytimemachine.utils.config import (
     HttpsInterception,
-    ClientConfigViaProxyAuth
+    ClientConfigViaProxyAuth,
+    parse_arguments
 )
 
 
 default_cfg: Config = Config()
-config = None
+config = default_cfg
 
 IP = default_cfg.host
 PORT = default_cfg.port
 
 
+# config = parse_arguments() # will break pytest discovery in vscode since it 
+
+logger = logging.getLogger(__name__)
+# logger.setLevel(logging.DEBUG)
+# handler = logging.StreamHandler(sys.stdout)
+# handler.setLevel(logging.DEBUG)
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# handler.setFormatter(formatter)
+# logger.addHandler(handler)
+
+
 class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
     def __init__(self, *args, **kwargs):
-        logger.info(f"Init - Object ID: {id(self)}")
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~___________________________OntologyTimeMachinePlugin')
+        # logger= logging.getLogger(__name__)
+        # logger.debug('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~___________________________debug')
+        # logger.info("Config: %s", self.config)
+        # handler.setFormatter(formatter)
+        # logger.addHandler(handler)
+        # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~___________________________OntologyTimeMachinePlugin')
+        logger.info(f"~~~~~~~~~~~___________________________OntologyTimeMachinePlugin Init - Object ID: {id(self)}")
         super().__init__(*args, **kwargs)
         self.config = config
-        logger.debug('debug')
         logger.info(f"Config: {self.config}")
 
     def before_upstream_connection(self, request: HttpParser) -> HttpParser | None:
@@ -82,7 +101,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
             config = self.config            
         
         if wrapped_request.is_connect_request():
-            logger.info(f"Handling CONNECT request: configured HTTPS interception mode: {config.httpsInterception}")
+            logger.info("Handling CONNECT request: configured HTTPS interception mode: %s", config.httpsInterception)
             # Mark if there is a connect request
             if not hasattr(self.client, "mark_connect"):
                 self.client.mark_connect = True
@@ -147,7 +166,7 @@ class OntologyTimeMachinePlugin(HttpProxyBasePlugin):
                     logger.info("Intercepting HTTPS request since it is an Archivo ontology request")
                     return True
             except Exception as e:
-                logger.error(f"Error while checking if request is an Archivo ontology request: {e}", exc_info=True)
+                logger.error("Error while checking if request is an Archivo ontology request: %s", e, exc_info=True)
             logger.info("No Interception of HTTPS request since it is NOT an Archivo ontology request")
             return False
         else:
@@ -231,5 +250,5 @@ if __name__ == "__main__":
     ]
 
     logger.info("Starting OntologyTimeMachineProxy server...")
-    logger.debug(f"starting proxypy engine with arguments: {sys.argv}")
+    logger.debug("starting proxypy engine with arguments: %s", sys.argv)
     proxy.main()
