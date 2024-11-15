@@ -1,14 +1,15 @@
 {
+    "version": "0.2.0",
     "configurations": [
         {
+            "name": "Time-Machine (manual virtual env selection)",
             "type": "debugpy",
             "request": "launch",
-            "name": "Run Time-Machine (manual virtual env selection)",
             "program": "${workspaceFolder}/ontologytimemachine/custom_proxy.py",
             "args": [
                 "--ontoFormat","ntriples",
-                "--ontoVersion","originalFailoverLiveLatest",
-                "--ontoPrecedence","enforcedPriority",
+                "--ontoVersion","latestArchived",
+                // "--ontoPrecedence","enforcedPriority",
                 "--httpsInterception","archivo",
                 "--logLevelTimeMachine","debug",
                 "--logLevelBase","info",
@@ -16,16 +17,16 @@
             ]
         },
         {
-            "name": "Run pytest module (manual virtual env selection)",
+            "name": "Pytest test (manual virtual env selection)",
             "type": "debugpy",
             "request": "launch",
             "cwd": "${workspaceFolder}",
             "module": "pytest",
-            "args": [
+            "args": [ "tests/test_proxy_auth_header.py"
             ],
             "console": "integratedTerminal",
             // "preLaunchTask":"Wait for Poetry Run Time-Machine-Proxy",
-            "justMyCode": true,
+            "justMyCode": false
         },
         { //untested
             "type": "debugpy",
@@ -43,6 +44,17 @@
             },
             "python": "${workspaceFolder}/.venv/bin/python", //use the virtualenv created by poetry from the project folder
             "preLaunchTask": "Poetry Install" // run the task to create virtual environment and install dependencies before launching the script
-        }
+        },
+        // { // does not work
+        //     "name": "Python: Tests in current file",
+        //     "purpose": ["debug-test"],
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "${file}",
+        //     "args": ["--color=yes --log-cli-level=DEBUG"],
+        //     "env": {"ENV_VAR":"RandomStuff"},
+        //     "console": "integratedTerminal",
+        //     "justMyCode": false
+        // }
     ]
 }
