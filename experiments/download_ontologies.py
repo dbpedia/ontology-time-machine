@@ -36,6 +36,18 @@ def get_causal_chain(exception):
         exception = exception.__context__
     return chain
 
+def get_type_chain(chain):
+    """Get the type chain as a string separated by '||'."""
+    return ' || '.join([entry['type'] for entry in chain])
+
+def get_more_specific_type(chain):
+    """Get the more specific type from the causal chain."""
+    if len(chain) > 1:
+        if chain[1]['type'] == 'MaxRetryError' and len(chain) > 2:
+            return chain[2]['type']
+        return chain[1]['type']
+    return None
+
 def download_ontology(url, formats, base_folder):
     """Download an ontology in specified formats and log details."""
     ontology_info = {
@@ -48,7 +60,8 @@ def download_ontology(url, formats, base_folder):
     }
 
     session = requests.Session()
-    retries = Retry(total=0, backoff_factor=1, status_forcelist=[429])
+    session.max_redirects = 10
+    retries = Retry(total=0, backoff_factor=1, status_forcelist=[427]) # wanted to use for 429 originally, but backoff is als applied to connection timeouts and such
     session.mount('http://', HTTPAdapter(max_retries=retries))
     session.mount('https://', HTTPAdapter(max_retries=retries))
 
@@ -59,6 +72,7 @@ def download_ontology(url, formats, base_folder):
             response = session.get(url, headers=headers, timeout=10)
             request_duration = time.time() - start_time
 
+            file_path = ""
             if response.status_code == 200:
                 parsed_url = urlparse(url)
                 ontology_name = os.path.basename(parsed_url.path) or "ontology"
@@ -72,34 +86,56 @@ def download_ontology(url, formats, base_folder):
                 save_file(response.content, file_path)
                 download_duration = time.time() - download_start_time
 
-                ontology_info["downloads"][format_name] = {
-                    "status_code": response.status_code,
-                    "headers": dict(response.headers),
-                    "file_path": file_path,
-                    "request_start_time": start_time,
-                    "request_duration": request_duration,
-                    # "download_duration": download_duration,
-                }
-            else:
-                ontology_info["downloads"][format_name] = {
-                    "status_code": response.status_code,
-                    "error": "Failed to fetch the ontology",
-                    "request_start_time": start_time,
-                    "request_duration": request_duration,
-                }
+            ontology_info["downloads"][format_name] = {
+                "status_code": response.status_code,
+                "file_path": file_path,
+                "request_start_time": start_time,
+                "request_duration": request_duration,
+                "error": {
+                    "type": None,
+                    "type_more_specific": None,
+                    "type_chain": None,
+                    "message": None,
+                    "traceback": None,
+                    "chain_details": None,
+                },
+                "content_length": response.headers.get('Content-Length'),
+                "content_lenght_measured": len(response.content),
+                "content_type": response.headers.get('Content-Type'),
+                "headers": dict(response.headers),
+                # "download_duration": download_duration,
+            }
+            # else:
+            #     ontology_info["downloads"][format_name] = {
+            #         "status_code": response.status_code,
+            #         "headers": dict(response.headers),
+            #         "error": "Failed to fetch the ontology",
+            #         "request_start_time": start_time,
+            #         "request_duration": request_duration,
+            #     }
 
         except Exception as e:
             request_duration = time.time() - start_time
+            chain_details = get_causal_chain(e)
             ontology_info["downloads"][format_name] = {
-                "error": {
-                    "message": str(e),
-                    "type": type(e).__name__,
-                    "traceback": traceback.format_exc(),
-                    "causal_chain": get_causal_chain(e),
-                },
+                "status_code": None,
+                "file_path": None,
                 "request_start_time": start_time,
                 "request_duration": request_duration,
+                "content_length": None,
+                "content_lenght_measured": None,
+                "content_type": None,
+                "error": {
+                    "type": type(e).__name__,
+                    "type_more_specific": get_more_specific_type(chain_details),
+                    "type_chain": get_type_chain(chain_details),
+                    "message": str(e),
+                    "traceback": traceback.format_exc(),
+                    "chain_details": chain_details,
+                },
+                "headers": None
             }
+                
 
     return ontology_info
 
