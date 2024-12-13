@@ -1,0 +1,75 @@
+[
+    {
+        "url": "http://babelnet.org/rdf/",
+        "downloads": {
+            "ttl": {
+                "status_code": 503,
+                "error": "Failed to fetch the ontology"
+            },
+            "nt": {
+                "status_code": 503,
+                "error": "Failed to fetch the ontology"
+            },
+            "rdfxml": {
+                "status_code": 503,
+                "error": "Failed to fetch the ontology"
+            }
+        }
+    },
+    {
+        "url": "http://bag.basisregistraties.overheid.nl/def/bag",
+        "downloads": {
+            "ttl": {
+                "status_code": 200,
+                "headers": {
+                    "vary": "Origin,Access-Control-Request-Method,Access-Control-Request-Headers",
+                    "x-envoy-upstream-service-time": "21",
+                    "Set-Cookie": "b92febf50d71b9ccc8184dfcf4ae480b=8bb862a4db465e2ec78dc36e4519d647; Path=/def; HttpOnly; Domain=bag.basisregistraties.overheid.nl",
+                    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "text/turtle",
+                    "Transfer-Encoding": "chunked",
+                    "Date": "Fri, 13 Dec 2024 05:21:18 GMT",
+                    "Keep-Alive": "timeout=20",
+                    "Connection": "keep-alive",
+                    "Server": "unspecified"
+                },
+                "file_path": "downloads/ttl/http___bag_basisregistraties_overheid_nl_def_bag.ttl"
+            },
+            "nt": {
+                "status_code": 200,
+                "headers": {
+                    "vary": "Origin,Access-Control-Request-Method,Access-Control-Request-Headers",
+                    "x-envoy-upstream-service-time": "15",
+                    "Set-Cookie": "b92febf50d71b9ccc8184dfcf4ae480b=590194453cdff47017f98c1dc79192d7; Path=/def; HttpOnly; Domain=bag.basisregistraties.overheid.nl",
+                    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "application/n-triples",
+                    "Transfer-Encoding": "chunked",
+                    "Date": "Fri, 13 Dec 2024 05:21:18 GMT",
+                    "Keep-Alive": "timeout=20",
+                    "Connection": "keep-alive",
+                    "Server": "unspecified"
+                },
+                "file_path": "downloads/nt/http___bag_basisregistraties_overheid_nl_def_bag.nt"
+            },
+            "rdfxml": {
+                "status_code": 200,
+                "headers": {
+                    "vary": "Origin,Access-Control-Request-Method,Access-Control-Request-Headers",
+                    "x-envoy-upstream-service-time": "11",
+                    "Set-Cookie": "b92febf50d71b9ccc8184dfcf4ae480b=590194453cdff47017f98c1dc79192d7; Path=/def; HttpOnly; Domain=bag.basisregistraties.overheid.nl",
+                    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+                    "Content-Encoding": "gzip",
+                    "Content-Type": "application/rdf+xml",
+                    "Transfer-Encoding": "chunked",
+                    "Date": "Fri, 13 Dec 2024 05:21:19 GMT",
+                    "Keep-Alive": "timeout=20",
+                    "Connection": "keep-alive",
+                    "Server": "unspecified"
+                },
+                "file_path": "downloads/rdfxml/http___bag_basisregistraties_overheid_nl_def_bag.rdfxml"
+            }
+        }
+    }
+]
