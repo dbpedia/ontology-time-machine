@@ -1,6 +1,8 @@
 import os
 import requests
 import json
+import traceback
+import time
 from urllib.parse import urlparse
 
 def ensure_directory(path):
@@ -21,6 +23,17 @@ def read_ontologies_from_file(file_path):
     with open(file_path, "r") as file:
         return [line.strip() for line in file if line.strip()]
 
+def get_causal_chain(exception):
+    """Get the causal chain of exceptions."""
+    chain = []
+    while exception:
+        chain.append({
+            "type": type(exception).__name__,
+            "message": str(exception),
+        })
+        exception = exception.__cause__
+    return chain
+
 def download_ontology(url, formats, base_folder):
     """Download an ontology in specified formats and log details."""
     ontology_info = {
@@ -35,7 +48,9 @@ def download_ontology(url, formats, base_folder):
     for format_name, mime_type in formats.items():
         try:
             headers["Accept"] = mime_type
+            start_time = time.time()
             response = requests.get(url, headers=headers, timeout=30)
+            request_duration = time.time() - start_time
 
             if response.status_code == 200:
                 parsed_url = urlparse(url)
@@ -46,22 +61,37 @@ def download_ontology(url, formats, base_folder):
                 ensure_directory(folder_path)
                 file_path = os.path.join(folder_path, filename)
 
+                download_start_time = time.time()
                 save_file(response.content, file_path)
+                download_duration = time.time() - download_start_time
 
                 ontology_info["downloads"][format_name] = {
                     "status_code": response.status_code,
                     "headers": dict(response.headers),
                     "file_path": file_path,
+                    "request_start_time": start_time,
+                    "request_duration": request_duration,
+                    # "download_duration": download_duration,
                 }
             else:
                 ontology_info["downloads"][format_name] = {
                     "status_code": response.status_code,
                     "error": "Failed to fetch the ontology",
+                    "request_start_time": start_time,
+                    "request_duration": request_duration,
                 }
 
         except Exception as e:
+            request_duration = time.time() - start_time
             ontology_info["downloads"][format_name] = {
-                "error": str(e),
+                "error": {
+                    "message": str(e),
+                    "type": type(e).__name__,
+                    "traceback": traceback.format_exc(),
+                    "causal_chain": get_causal_chain(e),
+                },
+                "request_start_time": start_time,
+                "request_duration": request_duration,
             }
 
     return ontology_info
