@@ -4,6 +4,8 @@ import json
 import traceback
 import time
 from urllib.parse import urlparse
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 def ensure_directory(path):
     """Ensure the directory exists."""
@@ -31,7 +33,7 @@ def get_causal_chain(exception):
             "type": type(exception).__name__,
             "message": str(exception),
         })
-        exception = exception.__cause__
+        exception = exception.__context__
     return chain
 
 def download_ontology(url, formats, base_folder):
@@ -45,11 +47,16 @@ def download_ontology(url, formats, base_folder):
         "Accept": "",
     }
 
+    session = requests.Session()
+    retries = Retry(total=0, backoff_factor=1, status_forcelist=[429])
+    session.mount('http://', HTTPAdapter(max_retries=retries))
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+
     for format_name, mime_type in formats.items():
         try:
             headers["Accept"] = mime_type
             start_time = time.time()
-            response = requests.get(url, headers=headers, timeout=30)
+            response = session.get(url, headers=headers, timeout=10)
             request_duration = time.time() - start_time
 
             if response.status_code == 200:
