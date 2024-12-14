@@ -157,6 +157,7 @@ def main():
     for url in urls:
         print(f'URL: {url}')
         ontology_log = download_ontology(url, formats, base_folder)
+        time.sleep(0.2)
         log.append(ontology_log)
 
     log_file = os.path.join(base_folder, "download_log.json")
