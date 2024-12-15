@@ -71,13 +71,10 @@ def download_ontology(url, formats, base_folder):
     session.mount('https://', HTTPAdapter(max_retries=retries))
 
     for format_name, mime_type in formats.items():
-        print(f'Format name: {format_name}')
         try:
             headers["Accept"] = mime_type
             start_time = time.time()
-            print(headers)
             response = session.get(url, headers=headers, proxies=proxies, timeout=10)
-            print(response.content)
             request_duration = time.time() - start_time
 
             file_path = ""
