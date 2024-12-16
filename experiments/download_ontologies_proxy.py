@@ -63,6 +63,8 @@ def download_ontology(url, formats, base_folder):
             "http": f"http://localhost:8898",
             "https": f"https://localhost:8898",
         }
+    
+    cacert_path = "ca-cert.pem"
 
     session = requests.Session()
     session.max_redirects = 10
@@ -74,7 +76,7 @@ def download_ontology(url, formats, base_folder):
         try:
             headers["Accept"] = mime_type
             start_time = time.time()
-            response = session.get(url, headers=headers, proxies=proxies, timeout=10)
+            response = session.get(url, proxies=proxies, verify=cacert_path, timeout=10)
             request_duration = time.time() - start_time
 
             file_path = ""
