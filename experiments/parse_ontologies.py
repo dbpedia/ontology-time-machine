@@ -18,12 +18,12 @@ def process_ontologies(json_file_path, output_file_path):
         for format_type, format_data in ontology["downloads"].items():
             # Extract the file path and format
             file_path = format_data.get("file_path")
-            file_path = file_path.replace('downloads_proxy-test', 'downloads_proxy-fixedCA')
             status_code = format_data.get("status_code")
             if not file_path:
                 format_data["parsed_triples"] = None
                 format_data["rapper_error"] = None
             elif file_path and status_code == 200:
+                file_path = file_path.replace('downloads_proxy-test', 'downloads_proxy-fixedCA')
                 # Prepare the command
                 command = [
                     "cat",
