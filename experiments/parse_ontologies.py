@@ -9,18 +9,27 @@ ontology_map = {
 }
 
 def process_ontologies(json_file_path, output_file_path):
+    def is_uri_in_subject(triples, ontology_uri):
+        """
+        Check if the ontology URI appears in the subject position of any triple.
+        """
+        subject_pattern = re.compile(rf"^<{re.escape(ontology_uri)}>")
+        return any(subject_pattern.match(triple) for triple in triples)
+    
     # Load the JSON file
     with open(json_file_path, 'r') as f:
         ontologies = json.load(f)
     
     for ontology in ontologies:
-        print(f'URL: {ontology["url"]}')
+        ontology_url = ontology["url"]
+        print(f'URL: {ontology_url}')
         for format_type, format_data in ontology["downloads"].items():
             # Extract the file path and format
             file_path = format_data.get("file_path")
             status_code = format_data.get("status_code")
             if not file_path:
                 format_data["parsed_triples"] = None
+                format_data["uri_in_subject_position"] = None
                 format_data["rapper_error"] = None
             elif file_path and status_code == 200:
                 file_path = file_path.replace('downloads_proxy-test', 'downloads_proxy-fixedCA')
@@ -33,7 +42,7 @@ def process_ontologies(json_file_path, output_file_path):
                     f"-i {ontology_map[format_type]}",
                     f"-o ntriples",
                     "-",
-                    ontology["url"]
+                    ontology_url
                 ]
                 print(" ".join(command))
 
@@ -45,19 +54,27 @@ def process_ontologies(json_file_path, output_file_path):
                         capture_output=True,
                         text=True
                     )
+                    
+                    
 
                     # Check the result and update the JSON
                     if result.returncode == 0:
                         output = result.stdout
+                        triples = output.splitlines()
                         num_triples = output.count("\n")
+                        
+                        uri_in_subject = is_uri_in_subject(triples, ontology_url)
+                        format_data["uri_in_subject_position"] = uri_in_subject
                         format_data["parsed_triples"] = num_triples
                         format_data["rapper_error"] = None
                     else:
                         format_data["parsed_triples"] = 0
+                        format_data["uri_in_subject_position"] = False
                         format_data["rapper_error"] = result.stderr.strip()
 
                 except Exception as e:
                     format_data["parsed_triples"] = 0
+                    format_data["uri_in_subject_position"] = False
                     format_data["rapper_error"] = str(e)
     
     # Save the updated JSON
