@@ -1,6 +1,7 @@
 import json
 import subprocess
 import os
+import re
 
 ontology_map = {
     'nt': 'ntriples',
