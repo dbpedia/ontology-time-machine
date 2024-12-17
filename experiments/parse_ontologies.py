@@ -35,6 +35,7 @@ def process_ontologies(json_file_path, output_file_path):
                     "-",
                     ontology["url"]
                 ]
+                print(command)
 
                 # Execute the command
                 try:
