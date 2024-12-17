@@ -17,9 +17,12 @@ def process_ontologies(json_file_path, output_file_path):
         for format_type, format_data in ontology["downloads"].items():
             # Extract the file path and format
             file_path = format_data.get("file_path")
+            file_path = file_path.replace('downloads_proxy-test', 'downloads_proxy-fixedCA')
             status_code = format_data.get("status_code")
-            
-            if file_path and status_code == 200:
+            if not file_path:
+                format_data["parsed_triples"] = None
+                format_data["rapper_error"] = None
+            elif file_path and status_code == 200:
                 # Prepare the command
                 command = [
                     "cat",
@@ -61,8 +64,8 @@ def process_ontologies(json_file_path, output_file_path):
 
 if __name__ == "__main__":
     # Replace these paths with your actual file paths
-    input_json_path = "downloads_proxy/download_proxy_log.json"
-    output_json_path = "downloads_proxy/download_proxy_log_extended.json"
+    input_json_path = "downloads_proxy-fixedCA/download_nt_proxy_log.json"
+    output_json_path = "downloads_proxy-fixedCA/download_nt_proxy_log_extended.json"
 
     if os.path.exists(input_json_path):
         process_ontologies(input_json_path, output_json_path)
