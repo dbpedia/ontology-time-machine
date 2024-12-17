@@ -3,7 +3,7 @@ import subprocess
 import os
 
 ontology_map = {
-    'nt': 'ntripes',
+    'nt': 'ntriples',
     'ttl': 'turtle',
     'rdfxml': 'rdfxml'
 }
