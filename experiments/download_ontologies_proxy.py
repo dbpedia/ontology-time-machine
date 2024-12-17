@@ -66,17 +66,18 @@ def download_ontology(url, formats, base_folder):
     
     cacert_path = "ca-cert.pem"
 
-    #session = requests.Session()
-    #session.max_redirects = 10
-    #retries = Retry(total=0, backoff_factor=1, status_forcelist=[427]) # wanted to use for 429 originally, but backoff is als applied to connection timeouts and such
-    #session.mount('http://', HTTPAdapter(max_retries=retries))
-    #session.mount('https://', HTTPAdapter(max_retries=retries))
+    # session = requests.Session()
+    # session.max_redirects = 10
+    # retries = Retry(total=0, backoff_factor=1, status_forcelist=[427]) # wanted to use for 429 originally, but backoff is als applied to connection timeouts and such
+    # session.mount('http://', HTTPAdapter(max_retries=retries))
+    # session.mount('https://', HTTPAdapter(max_retries=retries))
 
     for format_name, mime_type in formats.items():
         try:
             print(mime_type)
             headers["Accept"] = mime_type
             start_time = time.time()
+            #response = session.get(url, proxies=proxies, headers=headers, verify=cacert_path, timeout=10)
             response = requests.get(url, proxies=proxies, headers=headers, verify=cacert_path, timeout=10)
             request_duration = time.time() - start_time
 
@@ -157,7 +158,7 @@ def main():
         "rdfxml": "application/rdf+xml",
     }
 
-    base_folder = "downloads_proxy"
+    base_folder = "downloads_proxy_requests"
     ensure_directory(base_folder)
 
     log = []
