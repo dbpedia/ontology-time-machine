@@ -74,7 +74,6 @@ def download_ontology(url, formats, base_folder):
 
     for format_name, mime_type in formats.items():
         try:
-            print(mime_type)
             headers["Accept"] = mime_type
             start_time = time.time()
             #response = session.get(url, proxies=proxies, headers=headers, verify=cacert_path, timeout=10)
