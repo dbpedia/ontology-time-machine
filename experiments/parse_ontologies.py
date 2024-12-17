@@ -30,7 +30,7 @@ def process_ontologies(json_file_path, output_file_path):
                     file_path,
                     "|",
                     "rapper",
-                    f"-i {format_type}",
+                    f"-i {ontology_map[format_type]}",
                     f"-o ntriples",
                     "-",
                     ontology["url"]
