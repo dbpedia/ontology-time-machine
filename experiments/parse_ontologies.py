@@ -14,6 +14,7 @@ def process_ontologies(json_file_path, output_file_path):
         ontologies = json.load(f)
     
     for ontology in ontologies:
+        print(f'URL: {ontology["url"]}')
         for format_type, format_data in ontology["downloads"].items():
             # Extract the file path and format
             file_path = format_data.get("file_path")
