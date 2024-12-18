@@ -77,10 +77,6 @@ A time machine proxy. This proxy enables access to specific historical versions 
 - **apply request-based configuration**
 
 
-
-## Deployed at:
-95.217.207.179:8182
-
 ## Installation
 
 ### Before building the docker file:
@@ -130,7 +126,4 @@ python3 ontologytimemachine/custom_proxy.py --ontoFormat ntriples --ontoVersion 
 - curl -x http://0.0.0.0:8899 --cacert ca-cert.pem https://vocab.eccenca.com/auth/
 - curl -x http://0.0.0.0:8899 -H "Accept: text/turtle" --cacert ca-cert.pem http://dbpedia.org/ontology/Person
 
-
-### Not working: 
-- curl -x http://0.0.0.0:8899 -H "Accept: text/turtle" --cacert ca-cert.pem http://ontologi.es/days#
 
