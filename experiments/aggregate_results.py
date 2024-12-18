@@ -5,13 +5,21 @@ from collections import defaultdict
 content_type_mapping = {
     "ttl": "text/turtle",
     "nt": "application/n-triples",
-    "rdfxml": "application/rdf+xml",
+    "rdfxml": ["application/rdf+xml", "application/xml"],  # Updated to include multiple accepted types
 }
 
-# Load the JSON data from the correct file path
-file_path = 'downloads-200ms-shuffled/download_log_extended.json'
-with open(file_path, 'r') as f:
-    data = json.load(f)
+rdf_mimtetypes = ['text/turtle', 'application/n-triples', 'application/rdf+xml', 'application/xml']
+
+# File paths for the logs
+no_proxy_file_path = 'downloads-200ms-shuffled/download_log_extended.json'
+proxy_file_path = 'downloads_proxy_requests/download_proxy_log_extended.json'
+
+# Load the JSON data for no-proxy and with-proxy scenarios
+with open(no_proxy_file_path, 'r') as f:
+    no_proxy_data = json.load(f)
+
+with open(proxy_file_path, 'r') as f:
+    proxy_data = json.load(f)
 
 # Initialize the aggregation dictionary for both proxy and no-proxy scenarios
 aggregation = {
@@ -36,83 +44,97 @@ categories = [
     "no RDF mimetype",
     "confused RDF mimetype",
     "correct mimetype",
+    "correct for all 3 formats",
 ]
 
-# Map error types to categories
-error_mapping = {
-    "NameResolutionError": "DNS issue",
-    "ConnectionError": "Con. / transport issue",
-    "TimeoutError": "Con. / transport issue",
-    "ConnectTimeoutError": "Con. / transport issue",
-    "NewConnectionError": "Con. / transport issue",
-    "ReadTimeoutError": "Con. / transport issue",
-    "RemoteDisconnected": "Con. / transport issue",
-    "SSLError": "TLS cert issue",
-    "TooManyRedirects": "Too many redirects",
-    "HTTPError": "Non-200 HTTP code",
-}
+# Error type to category mapping logic
+def map_error_to_category(error_type, type_more_specific):
+    if error_type == "TooManyRedirects":
+        return "Too many redirects"
+    elif error_type == "SSLError":
+        return "TLS cert issue"
+    elif error_type == "ConnectionError":
+        if type_more_specific == "NameResolutionError":
+            return "DNS issue"
+        else:
+            return "Con. / transport issue"
+    elif error_type == "ConnectTimeout":
+        return "Con. / transport issue"
+    else:
+        return "Con. / transport issue"
 
-# Process each entry in the JSON data
-for entry in data:
-    url = entry.get("url", "")
-    downloads = entry.get("downloads", {})
-    
-    for format, details in downloads.items():
-        # Check if proxy was used
-        is_proxy = details.get("proxy_used", False)
-        proxy_key = "with proxy" if is_proxy else "w/o proxy"
+# Check if MIME type is valid for the format
+def is_valid_mimetype(format, content_type):
+    expected_types = content_type_mapping.get(format, [])
+    if isinstance(expected_types, list):
+        return content_type in expected_types
+    return content_type == expected_types
 
-        # Extract details
-        status_code = details.get("status_code")
-        parsed_triples = details.get("parsed_triples", 0)
-        content_length = details.get("content_lenght_measured", 0)
-        content_type = details.get("content_type", "").lower() if details.get("content_type") else None
-        uri_in_subject_position = details.get("uri_in_subject_position", False)
-        rapper_error = details.get("rapper_error")
-        error = details.get("error", {})
-        
-        # Check for errors and categorize them
-        if error and error.get("type_more_specific"):
-            error_type = error["type_more_specific"]
-            category = error_mapping.get(error_type, None)
-            if category:
+# Process data for aggregation
+def process_data(data, proxy_key):
+    for entry in data:
+        url = entry.get("url", "")
+        downloads = entry.get("downloads", {})
+        formats_correct = set()
+
+        for format, details in downloads.items():
+            # Extract details
+            status_code = details.get("status_code")
+            parsed_triples = details.get("parsed_triples", 0)
+            content_length = details.get("content_lenght_measured", 0)
+            content_type = details.get("content_type", "").lower() if details.get("content_type") else None
+            uri_in_subject_position = details.get("uri_in_subject_position", False)
+            rapper_error = details.get("rapper_error")
+            error = details.get("error", {})
+            
+            # Check for errors and categorize them
+            if error and error.get("type"):
+                error_type = error["type"]
+                type_more_specific = error.get("type_more_specific")
+                category = map_error_to_category(error_type, type_more_specific)
                 aggregation[proxy_key][category][format] += 1
                 aggregation[proxy_key]["unsuccessful payload retrieval"][format] += 1
-            else:
-                # Print uncategorized errors
-                print(f"Uncategorized error type_more_specific: {error_type}")
-            continue
+                continue
 
-        # Handle non-200 status codes
-        if status_code != 200:
-            aggregation[proxy_key]["Non-200 HTTP code"][format] += 1
-            aggregation[proxy_key]["unsuccessful payload retrieval"][format] += 1
-            continue
+            # Handle non-200 status codes
+            if status_code != 200:
+                aggregation[proxy_key]["Non-200 HTTP code"][format] += 1
+                aggregation[proxy_key]["unsuccessful payload retrieval"][format] += 1
+                continue
 
-        # Successful request (status code 200)
-        aggregation[proxy_key]["Successful request (code 200)"][format] += 1
+            # Successful request (status code 200)
+            aggregation[proxy_key]["Successful request (code 200)"][format] += 1
 
-        # Check for partially parsable RDF-content
-        if parsed_triples > 0 and rapper_error:
-            aggregation[proxy_key]["partially parsable rdf-content"][format] += 1
-            continue
+            # Categorize successful ontologies
+            if content_length == 0:
+                aggregation[proxy_key]["0 bytes content"][format] += 1
+            elif parsed_triples == 0:
+                aggregation[proxy_key]["no rdf content (0 triples parsable)"][format] += 1
+            elif parsed_triples > 0 and rapper_error:
+                aggregation[proxy_key]["partially parsable rdf-content"][format] += 1
+                if uri_in_subject_position:
+                    aggregation[proxy_key]["describes requested ont."][format] += 1
+            elif parsed_triples > 0 and not rapper_error:
+                aggregation[proxy_key]["fully parsable rdf-content"][format] += 1
+                if uri_in_subject_position:
+                    aggregation[proxy_key]["describes requested ont."][format] += 1
 
-        # Count content conditions for successful requests
-        if content_length == 0:
-            aggregation[proxy_key]["0 bytes content"][format] += 1
-        elif parsed_triples == 0:
-            aggregation[proxy_key]["no rdf content (0 triples parsable)"][format] += 1
-        elif parsed_triples >= 1000:
-            aggregation[proxy_key]["fully parsable rdf-content"][format] += 1
-            if uri_in_subject_position:
-                aggregation[proxy_key]["describes requested ont."][format] += 1
-                # Check MIME types for describing ontologies
-                if content_type == content_type_mapping.get(format, ""):
-                    aggregation[proxy_key]["correct mimetype"][format] += 1
-                elif content_type in content_type_mapping.values():
-                    aggregation[proxy_key]["confused RDF mimetype"][format] += 1
-                else:
-                    aggregation[proxy_key]["no RDF mimetype"][format] += 1
+                    # Check MIME types only for ontologies that describe the requested ontology
+                    if content_type and is_valid_mimetype(format, content_type):
+                        aggregation[proxy_key]["correct mimetype"][format] += 1
+                        formats_correct.add(format)
+                    elif content_type and content_type in rdf_mimtetypes:
+                        aggregation[proxy_key]["confused RDF mimetype"][format] += 1
+                    else:
+                        aggregation[proxy_key]["no RDF mimetype"][format] += 1
+
+        # Check if ontology is correct for all 3 formats
+        if formats_correct == {"ttl", "nt", "rdfxml"}:
+            aggregation[proxy_key]["correct for all 3 formats"]["all"] += 1
+
+# Process both datasets
+process_data(no_proxy_data, "w/o proxy")
+process_data(proxy_data, "with proxy")
 
 # Print the table
 table_headers = ["Accessibility Status", "turtle", "ntriples", "rdfxml"]
@@ -124,3 +146,6 @@ for proxy_key in ["w/o proxy", "with proxy"]:
         for format in ["ttl", "nt", "rdfxml"]:
             row.append(aggregation[proxy_key][category].get(format, 0))
         print(f"{row[0]:<40} {row[1]:<10} {row[2]:<10} {row[3]:<10}")
+    # Print total for "correct for all 3 formats"
+    correct_all = aggregation[proxy_key]["correct for all 3 formats"]["all"]
+    print(f"{'correct for all 3 formats':<40} {correct_all:<10}")
