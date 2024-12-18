@@ -18,13 +18,17 @@ def transform_json(input_file_path, output_file_path):
                     download["error"]["chain_details"] = "\n".join(
                         f"{item['type']}: {item['message']}" for item in chain_details
                     )
+            if "rapper_error" in download and download["rapper_error"]:
+                rapper_error_lines = download["rapper_error"].splitlines()
+                if len(rapper_error_lines) > 11:
+                    download["rapper_error"] = "\n".join(rapper_error_lines[:6] + ["..."] + rapper_error_lines[-5:])
 
     with open(output_file_path, "w") as file:
         json.dump(data, file, indent=4)
 
 def main():
-    input_json_file = "downloads/download_log.json"
-    output_json_file = "downloads/download_log_flattened.json"
+    input_json_file = "downloads-200ms-shuffled/download_log_extended.json"
+    output_json_file = "downloads-200ms-shuffled/download_log_extended_flattened.json"
     transform_json(input_json_file, output_json_file)
     print(f"Transformation complete. File saved to {output_json_file}")
 
