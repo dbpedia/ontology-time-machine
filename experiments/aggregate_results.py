@@ -64,11 +64,20 @@ def map_error_to_category(error_type, type_more_specific):
         return "Con. / transport issue"
 
 # Check if MIME type is valid for the format
-def is_valid_mimetype(format, content_type):
+def is_correct_mimetype(format, content_type):
     expected_types = content_type_mapping.get(format, [])
     if isinstance(expected_types, list):
-        return content_type in expected_types
-    return content_type == expected_types
+        for expected_type in expected_types:
+            if expected_type in content_type:
+                return True
+        return False
+    return expected_types in content_type
+
+def is_rdf_mimetype(content_type):
+    for rdf_mimetype in rdf_mimtetypes:
+        if rdf_mimetype in content_type:
+            return True
+    return False
 
 # Process data for aggregation
 def process_data(data, proxy_key):
@@ -120,10 +129,10 @@ def process_data(data, proxy_key):
                     aggregation[proxy_key]["describes requested ont."][format] += 1
 
                     # Check MIME types only for ontologies that describe the requested ontology
-                    if content_type and is_valid_mimetype(format, content_type):
+                    if content_type and is_correct_mimetype(format, content_type):
                         aggregation[proxy_key]["correct mimetype"][format] += 1
                         formats_correct.add(format)
-                    elif content_type and content_type in rdf_mimtetypes:
+                    elif content_type and is_rdf_mimetype(content_type):
                         aggregation[proxy_key]["confused RDF mimetype"][format] += 1
                     else:
                         aggregation[proxy_key]["no RDF mimetype"][format] += 1
