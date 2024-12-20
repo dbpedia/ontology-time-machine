@@ -6,7 +6,7 @@ __pycache__/
 
 ontologytimemachine/utils/archivo_ontologies_download.txt
 ontologytimemachine/utils/archivo_ontologies_hash.txt
-
+experiments/downloads*
 # C extensions
 *.so
 

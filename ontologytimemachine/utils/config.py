@@ -90,9 +90,9 @@ class Config:
     logLevelTimeMachine: LogLevel = LogLevel.DEBUG
     logLevelBase: LogLevel = LogLevel.INFO
     ontoFormatConf: OntoFormatConfig = field(default_factory=OntoFormatConfig)
-    ontoVersion: OntoVersion = OntoVersion.ORIGINAL_FAILOVER_LIVE_LATEST
+    ontoVersion: OntoVersion = OntoVersion.LATEST_ARCHIVED
     restrictedAccess: bool = False
-    clientConfigViaProxyAuth: ClientConfigViaProxyAuth = ClientConfigViaProxyAuth.REQUIRED
+    clientConfigViaProxyAuth: ClientConfigViaProxyAuth = ClientConfigViaProxyAuth.IGNORE
     httpsInterception: HttpsInterception = HttpsInterception.ALL
     disableRemovingRedirects: bool = False
     timestamp: str = ""
