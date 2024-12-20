@@ -58,18 +58,26 @@ def download_ontology(url, formats, base_folder):
     headers = {
         "Accept": "",
     }
+    
+    proxies = {
+            "http": f"http://localhost:8898",
+            "https": f"http://localhost:8898",
+        }
+    
+    cacert_path = "ca-cert.pem"
 
-    session = requests.Session()
-    session.max_redirects = 10
-    retries = Retry(total=0, backoff_factor=1, status_forcelist=[427]) # wanted to use for 429 originally, but backoff is als applied to connection timeouts and such
-    session.mount('http://', HTTPAdapter(max_retries=retries))
-    session.mount('https://', HTTPAdapter(max_retries=retries))
+    # session = requests.Session()
+    # session.max_redirects = 10
+    # retries = Retry(total=0, backoff_factor=1, status_forcelist=[427]) # wanted to use for 429 originally, but backoff is als applied to connection timeouts and such
+    # session.mount('http://', HTTPAdapter(max_retries=retries))
+    # session.mount('https://', HTTPAdapter(max_retries=retries))
 
     for format_name, mime_type in formats.items():
         try:
             headers["Accept"] = mime_type
             start_time = time.time()
-            response = session.get(url, headers=headers, timeout=10)
+            #response = session.get(url, proxies=proxies, headers=headers, verify=cacert_path, timeout=10)
+            response = requests.get(url, headers=headers, timeout=10)
             request_duration = time.time() - start_time
 
             file_path = ""

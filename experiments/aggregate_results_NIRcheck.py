@@ -47,9 +47,9 @@ categories = [
     "0 bytes content",
     "no rdf content (0 triples parsable)",
     "partially parsable rdf-content",
-    # "pp describes requested ont.", 
+    "pp describes requested ont.", 
     "fully parsable rdf-content",
-    # "describes requested ont.",
+    "describes requested ont.",
     "no RDF mimetype",
     "confused RDF mimetype",
     "correct mimetype",
@@ -130,12 +130,12 @@ def process_data(data, proxy_key):
                 aggregation[proxy_key]["no rdf content (0 triples parsable)"][format] += 1
             elif parsed_triples > 0 and rapper_error:
                 aggregation[proxy_key]["partially parsable rdf-content"][format] += 1
-                # if uri_in_subject_position:
-                #     aggregation[proxy_key]["pp describes requested ont."][format] += 1
+                if uri_in_subject_position:
+                    aggregation[proxy_key]["pp describes requested ont."][format] += 1
             elif parsed_triples > 0 and not rapper_error:
                 aggregation[proxy_key]["fully parsable rdf-content"][format] += 1
-                if True:
-                    # aggregation[proxy_key]["describes requested ont."][format] += 1
+                if uri_in_subject_position:
+                    aggregation[proxy_key]["describes requested ont."][format] += 1
 
                     # Check MIME types only for ontologies that describe the requested ontology
                     if content_type and is_correct_mimetype(format, content_type):

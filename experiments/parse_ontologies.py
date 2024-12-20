@@ -17,9 +17,18 @@ def process_ontologies(json_file_path, output_file_path):
         subject_pattern = re.compile(rf"^<{re.escape(ontology_uri)}>")
         return any(subject_pattern.match(triple) for triple in triples)
     
+    def format_error_message(error_message):
+        lines = error_message.splitlines()
+        if len(lines) > 20:
+            return "\n".join(lines[:10] + ["\n\n\n............\n\n\n"] + lines[-10:])
+        return error_message
+    
     # Load the JSON file
     with open(json_file_path, 'r') as f:
         ontologies = json.load(f)
+    
+    base_folder = os.path.dirname(json_file_path)
+    input_base_folder = os.path.basename(base_folder)
     
     for ontology in ontologies:
         ontology_url = ontology["url"]
@@ -33,7 +42,9 @@ def process_ontologies(json_file_path, output_file_path):
                 format_data["uri_in_subject_position"] = None
                 format_data["rapper_error"] = None
             elif file_path and status_code == 200:
-                file_path = file_path.replace('downloads_proxy-test', 'downloads_proxy-fixedCA')
+                file_path_parts = file_path.split(os.sep)
+                file_path_parts[0] = input_base_folder
+                file_path = os.sep.join(file_path_parts)
                 # Prepare the command
                 command = [
                     "cat",
@@ -56,22 +67,19 @@ def process_ontologies(json_file_path, output_file_path):
                         text=True
                     )
                     
-                    
-
                     # Check the result and update the JSON
+                    output = result.stdout
+                    triples = output.splitlines()
+                    num_triples = output.count("\n")
+                    
+                    uri_in_subject = is_uri_in_subject(triples, ontology_url)
+                    format_data["uri_in_subject_position"] = uri_in_subject
+                    format_data["parsed_triples"] = num_triples
+
                     if result.returncode == 0:
-                        output = result.stdout
-                        triples = output.splitlines()
-                        num_triples = output.count("\n")
-                        
-                        uri_in_subject = is_uri_in_subject(triples, ontology_url)
-                        format_data["uri_in_subject_position"] = uri_in_subject
-                        format_data["parsed_triples"] = num_triples
                         format_data["rapper_error"] = None
                     else:
-                        format_data["parsed_triples"] = 0
-                        format_data["uri_in_subject_position"] = False
-                        format_data["rapper_error"] = result.stderr.strip()
+                        format_data["rapper_error"] = format_error_message(result.stderr.strip())
 
                 except Exception as e:
                     format_data["parsed_triples"] = 0
@@ -84,8 +92,8 @@ def process_ontologies(json_file_path, output_file_path):
 
 if __name__ == "__main__":
     # Replace these paths with your actual file paths
-    input_json_path = "downloads_proxy-fixedCA/download_nt_proxy_log.json"
-    output_json_path = "downloads_proxy-fixedCA/download_nt_proxy_log_extended.json"
+    input_json_path = "downloads_direct_requests/download_log.json"
+    output_json_path = "downloads_direct_requests/download_log_fixshort.json"
 
     if os.path.exists(input_json_path):
         process_ontologies(input_json_path, output_json_path)
