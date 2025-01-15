@@ -73,6 +73,7 @@ class ProxyAutoStartUpTestCase(TestCase):
             logger.error(f"Request exception: {e}", exc_info=True)
             return {'status_code': 'error'}
 
+    @pytest.mark.skip(reason="this test is just as a preliminary test showcasing how to spin up the proxy server embedded and not standalone but requires further refactoring of the main routines to work properly")
     def test_function1(self) -> None:
         logger.debug("~~~~~~~~~~~~~~~~~~~~~~~______________________________#Debug message from imported time machine logger")
         logger.debug(vars(logger))

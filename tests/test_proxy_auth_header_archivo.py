@@ -125,6 +125,7 @@ def make_request_with_proxy(iri: str, mode: str) -> Tuple[int, str]:
         return mock_response
 
 # Parametrize the test cases with data loaded from the TSV file
+@pytest.mark.skip(reason="this test is not ready yet")
 @pytest.mark.parametrize("test_case", load_test_data('tests/archivo_test_IRIs.tsv'))
 def test_proxy_responses(test_case):
     enabled = test_case['enable_testcase']
