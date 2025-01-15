@@ -7,7 +7,7 @@ import itertools
 from ontologytimemachine.custom_proxy import IP, PORT
 
 
-PROXY = f"{IP}:{PORT}"
+PROXY = f"{IP[0]}:{PORT}"
 HTTP_PROXY = f"http://{PROXY}"
 HTTPS_PROXY = f"http://{PROXY}"
 PROXIES = {"http": HTTP_PROXY, "https": HTTPS_PROXY}

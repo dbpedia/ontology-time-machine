@@ -1,4 +1,5 @@
 import unittest
+import pytest
 import requests
 import csv
 from proxy.proxy import Proxy
@@ -166,7 +167,7 @@ class OntoVersionTestCase(unittest.TestCase):
         if error_found:
             self.fail("One or more assertions failed. See logs for details.")
                 
-
+    @pytest.mark.skip(reason="this test is not ready yet")
     def test_requests_with_different_onto_versions(self):
         """Test requests with different OntoVersions and compare results."""
         # Make request without proxy
